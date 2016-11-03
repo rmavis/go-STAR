@@ -267,6 +267,7 @@ func makeRecordReviewer(act func([]Record)) func([]Record) {
 			noRecordsWanted()
 		} else {
 			act(wanted)
+			// Wrapup function (update wanteds' time and count, etc)
 		}
 	}
 
