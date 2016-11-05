@@ -158,7 +158,7 @@ func getActFromChar(arg string) []int {
 		act = []int{1, 0, 1}
 	case arg == "m":  // This will result in a lame demo.  #TODO
 		act = []int{6, 0, 0}
-	case arg == "n":  // new entry
+	case arg == "n":  // create entry
 		act = []int{2, 0, 0}
 	case arg == "o":  // search, open
 		act = []int{1, 2, 0}
@@ -203,7 +203,7 @@ func getActFromWord(arg string) []int {
 		act = []int{5, 0, 0}
 	case arg == "loose":
 		act = []int{1, 0, 1}
-	case arg == "new":
+	case arg == "new" || arg == "create":
 		act = []int{2, 0, 0}
 	case arg == "open":
 		act = []int{1, 2, 0}

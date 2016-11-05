@@ -1,10 +1,10 @@
 * Todo [0/4]
   Always: grep -i "todo" *.go
+  - [ ] Create records
+  - [ ] Delete records
   - [ ] Wrapup function
     After acting on value.
     Update touched date and count, etc.
-  - [ ] Create records
-  - [ ] Delete records
   - [ ] Edit records
     Open in editor, etc.
 

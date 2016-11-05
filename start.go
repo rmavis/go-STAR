@@ -26,7 +26,8 @@ func makeAction(args []string) func() {  // #TODO
 	case action_code[0] == 1:  // search
 		action = makeSearchAction(conf, action_code, terms)
 	case action_code[0] == 2:  // create
-		action = func() {fmt.Printf("Would make `create` action.")}
+		action = makeCreateAction(conf, action_code, terms)
+		// action = func() {fmt.Printf("Would make `create` action.")}
 	case action_code[0] == 3:  // help
 		action = func() {fmt.Printf("Would make `help` action.")}
 	case action_code[0] == 4:  // dump

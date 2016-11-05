@@ -20,13 +20,14 @@ type Record struct {
 
 // These are the ASCII Group, Record, and Unit separator characters.
 // They are of type `rune`.
-const GroupSeparator = ''
-const RecordSeparator = ''
-const UnitSeparator = ''
+const GroupSeparator = ''   // Separates records
+const RecordSeparator = ''  // Separates parts of records (the value from the tags)
+const UnitSeparator = ''    // Separates parts of parts (each tag from each tag)
 
 
 
 func readRecords(matcher func(Record) float64, sorter func([]Record)) []Record {
+	// Need to update this to read the conf's .Store  #TODO
 	file_name := DefaultStoreFilePath()
 
 	records := readRecordsFromStore(file_name, matcher)
@@ -51,7 +52,7 @@ func readRecordsFromStore(file_name string, getMatchRate func(Record) float64) [
 		parts := splitEntry(entry)
 
 		if (doesEntryHaveParts(parts)) {
-			record := makeRecord(parts)
+			record := makeRecordFromParts(parts)
 			match_rate := getMatchRate(record)
 
 			if match_rate > 0.0 {
@@ -87,7 +88,7 @@ func readNextEntry(reader *bufio.Reader) (string, bool) {
 
 
 
-func makeRecord(entry []string) Record {
+func makeRecordFromParts(entry []string) Record {
 	return Record{entry[0], splitField(entry[1]), splitField(entry[2]), 0.0}
 }
 
