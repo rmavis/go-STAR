@@ -6,149 +6,6 @@ import (
 )
 
 
-/*
-
-The functions in this file will build and pass around a slice that
-contains three ints that, together, represent the user's intention
-as specified in the command line arguments.
-
-The first int is a code indicating the command/operation:
-1: search
-2: create
-3: help
-4: dump
-5: initialize
-6: demo
-
-If the first int is a verb, the second int is an adverb. Only some
-verbs can be modified:
-1 (search):
-  0: default (read from config)
-  1: pbcopy
-  2: open
-  3: edit
-  4: delete
-3 (help):
-  1: commands
-  2: readme
-  3: customization
-  4: examples
-4 (dump):
-  1: values
-  2: tags
-
-And if the second int is an adverb, the third is an adjective:
-1 (search):
-  0: default (read from config)
-  1: loose
-  2: strict
-
-A 0 in any place means that no relevant argument was given and that
-a sensible default should be used, if applicable.
-
-*/
-
-
-
-
-func makeAction(args []string) func() {
-	action_code, terms := parseArgs(args)
-	conf := readConfig()
-
-	var action func()
-	switch {
-	case action_code[0] == 1:  // search
-		action = makeSearchAction(conf, action_code, terms)
-
-	case action_code[0] == 2:  // create
-		action = func() {fmt.Printf("Would make `create` action.")}
-	case action_code[0] == 3:  // help
-		action = func() {fmt.Printf("Would make `help` action.")}
-	case action_code[0] == 4:  // dump
-		if action_code[1] == 1 {
-			action = makeSearchAction(conf, action_code, terms)
-		} else {
-			action = func() {fmt.Printf("Would make `dump` action.")}
-			// #TODO
-		}
-
-	case action_code[0] == 5:  // initialize
-		action = func() {fmt.Printf("Would make `init` action.")}
-	case action_code[0] == 6:  // demo
-		action = func() {fmt.Printf("Would make `demo` action.")}
-	default:
-		action = func() {fmt.Printf("Would make `error` action.")}
-	}
-
-	return action
-}
-
-
-
-func makeSearchAction(conf Config, action_code []int, terms []string) func() {
-	var match_act func ([]Record)
-	var match_lim int
-
-	// The 1st position indicates the action to take on the matches.
-	switch {
-	case action_code[1] == 0:  // Read from config.
-		switch {
-		case conf.Action == "copy":  // "copy" and "open" are shortcuts.
-			match_act = makeRecordReviewer(pipeRecordsToPbcopy)
-		case conf.Action == "open":
-			match_act = makeRecordReviewer(pipeRecordsToOpen)
-		case conf.Action == "":      // If nothing, then just show them.
-			match_act = printRecords
-		default:                     // Any external command can be specified.
-			piper := makeRecordPiper(conf.Action)
-			match_act = makeRecordReviewer(piper)
-		}
-	case action_code[1] == 1:  // pbcopy
-		match_act = makeRecordReviewer(pipeRecordsToPbcopy)
-	case action_code[1] == 2:  // open
-		match_act = makeRecordReviewer(pipeRecordsToOpen)
-	case action_code[1] == 3:  // edit
-		match_act = editRecords
-	case action_code[1] == 4:  // delete
-		match_act = deleteRecords
-	default:  // Bork.
-		match_act = printRecords
-	}
-
-	// The 2nd position indicates the match mode.
-	switch {
-	case action_code[0] == 4:  // All.
-		match_lim = 0
-	case action_code[2] == 0:  // Read from config.
-		if conf.FilterMode == "loose" {
-			match_lim = 1
-		} else {
-			match_lim = len(terms)
-		}
-	case action_code[2] == 1:  // loose
-		match_lim = 1
-	case action_code[2] == 2:  // strict
-		match_lim = len(terms)
-	default:  // Bork.
-		fmt.Printf("Invalid match code (%v). Using '1'.\n", action_code[2])
-		match_lim = 1
-	}
-
-	action := func() {
-		records := readRecords(terms, match_lim)
-		match_act(records)
-	}
-
-	return action
-}
-
-
-
-
-
-//////////////////////////////
-
-
 
 
 
@@ -163,9 +20,12 @@ func actionCodeHelpCommands() []int {
 	return []int{3, 1, 0}
 }
 
+
 func actionCodeDefaultSearch() []int {
 	return []int{1, 0, 0}
 }
+
+
 
 
 
@@ -282,6 +142,10 @@ func getActFromChar(arg string) []int {
 	switch {
 	case arg == "a":  // dump vals (all)
 		act = []int{4, 1, 0}
+	case arg == "b":  // search, print only (browse)
+		act = []int{1, 5, 0}
+	case arg == "c":  // search, copy
+		act = []int{1, 1, 0}
 	case arg == "d":  // search, delete
 		act = []int{1, 4, 0}
 	case arg == "e":  // search, edit
@@ -321,6 +185,8 @@ func getActFromWord(arg string) []int {
 	switch {
 	case arg == "all":
 		act = []int{4, 1, 0}
+	case arg == "browse":
+		act = []int{1, 5, 0}
 	case arg == "commands":
 		act = []int{3, 1, 0}
 	case arg == "customization":
@@ -378,96 +244,3 @@ func mergeActionCodes(act []int, acts [][]int) []int {
 
 	return new
 }
-
-
-
-
-/*
-
-ARGUMENT TYPES
-
-- Matching
-  l (match loosely -- or)
-  s (match strictly -- and)
-
-- Action
-  o (pipe value to `open`)
-  c (pipe value to `pbcopy`)
-  (((would be cool if user could pipe value to arbitrary program)))
-  d (delete)
-  e (edit)
-
-- Static messages
-  c (help [commands])
-  f (help [flags])
-  h (help)
-  r (readme)
-  xh (extra help)
-  xr (extra readme)
-  x (examples)
-
-- Dynamic messages (dumps?)
-  a (all)
-  t (tags)
-
-- Creation
-  i (init -- `touch` store file)
-  n (add new entry)
-
-- Compound
-  m (demo)
-
-
-
-USAGE FORMS
-
-- Find and operate on exiting entries:
-  star -[ls][ocde] tag(s)
-  Operation (Verb): search.
-  Match mode (Adverb): determined by [ls] or default.
-  Action: determined by [ocde] or default.
-
-- See a help message
-  star -[cfh][r][x]
-  Operation (Verb): help message.
-  Variation: determined by optional presence of `x`.
-
-- See data dumps on existing entries
-  star -[at]
-  Operation (Verb): dump.
-  Dump material: determined by [at].
-
-- Create a new entry
-  star -n tag(s) value
-  Operation (Verb): create.
-
-- Touch the store file
-  star -i
-  Operation (Verb): initialize.
-
-- Run the demo
-  star -m -[ls][ocde] tag(s)
-  Operation (Verb): demo.
-
-
-FLAGS
-  -a, --all        Show all entries.
-  -c, --commands,
-    -f, --flags,
-    -h, --help     Show this message.
-  -d, --delete     Delete an entry.
-  -e, --edit       Edit an entry.
-  -i, --init       Create the ~/.config/star/store file.
-  -l, --loose      Match loosely, rather than strictly.
-  -m, --demo       Run the demo.
-  -n, --new        Add a new entry.
-  -o, --open       open the value rather than pbcopy it.
-  -p, --copy       pbcopy the value rather than open it.
-  -r, --readme,    Show the readme message.
-  -s, --strict     Match strictly rather than loosely.
-  -t, --tags       Show all tags.
-  -x, --examples   Show some examples.
-  -xh, -hx,        Show this message with extra details.
-  -xr, -rx,        Show the readme message with extra details.
-
-*/

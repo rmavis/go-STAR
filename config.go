@@ -25,6 +25,7 @@ const DefaultEditorPath = "/usr/bin/vi"
 const DefaultFilterMode = "loose"
 const DefaultStoreFileName = "store"
 const OpenPath = "/usr/bin/open"
+const PagerPath = "/usr/bin/less"
 const PbcopyPath = "/usr/bin/pbcopy"
 
 
@@ -57,16 +58,26 @@ func ConfigFilePath() string {
 
 
 func defaultConfig() Config {
-	return Config{PbcopyPath, getDefaultEditor(), DefaultFilterMode, DefaultStoreFilePath()}
+	return Config{PbcopyPath, getEnv("EDITOR", DefaultEditorPath), DefaultFilterMode, DefaultStoreFilePath()}
 }
 
 
 
-func getDefaultEditor() string {
-	ed := os.Getenv("EDITOR")
+// func getDefaultEditor() string {
+// 	ed := os.Getenv("EDITOR")
+
+// 	if ed == "" {
+// 		return DefaultEditorPath
+// 	} else {
+// 		return ed
+// 	}
+// }
+
+func getEnv(env_var string, _default string) string {
+	ed := os.Getenv(env_var)
 
 	if ed == "" {
-		return DefaultEditorPath
+		return _default
 	} else {
 		return ed
 	}

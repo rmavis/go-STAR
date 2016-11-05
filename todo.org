@@ -1,0 +1,31 @@
+* Todo [0/4]
+  Always: grep -i "todo" *.go
+  - [ ] Wrapup function
+    After acting on value.
+    Update touched date and count, etc.
+  - [ ] Create records
+  - [ ] Delete records
+  - [ ] Edit records
+    Open in editor, etc.
+
+
+
+* Bugs [0/2]
+  - [ ] When piping multiple values to `pbcopy` only the last one
+  - [ ] When command in config.yaml has space (eg `ls -la`) the command will fail
+    Because "ls -la" is not a command.
+    Need to split on spaces, use the first as command, rest as args.
+
+
+
+* New features [0/2]
+  - [ ] Browse! Sheesh.
+  - [ ] Allow user to pipe to arbitrary tools
+    Via command line option or config.yaml
+
+
+
+* Would be nice / optimizations [0/2]
+  - [ ] Pass pointers to `conf` instead of copies
+  - [ ] Error messages from shell commands?
+    Currently "Error running `/usr/bin/open wicked game`: exit status 1" instead of "The file /Users/richardmavis/Code/go/src/gitlab.com/u/rmavis/gostar/wicked does not exist."

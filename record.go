@@ -4,7 +4,6 @@ import (
     "bufio"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -27,30 +26,13 @@ const UnitSeparator = ''
 
 
 
-func readRecords(args []string, match_lim int) []Record {
-	var matcher func(Record) float64
-	var sorts func([]Record)
-
-	if len(args) == 0 {
-		matcher = func(_ Record) float64 {return 1.0}
-		sorts = func(records []Record) {
-			sort.Sort(sort.Reverse(ByDateCreated(records)))
-		}
-	} else {
-		matcher = makeMatcher(args, match_lim)
-		sorts = func(records []Record) {
-			sort.Sort(sort.Reverse(ByMatchRate(records)))
-		}
-	}
-
+func readRecords(matcher func(Record) float64, sorter func([]Record)) []Record {
 	file_name := DefaultStoreFilePath()
 
 	records := readRecordsFromStore(file_name, matcher)
-	sorts(records)
+	sorter(records)
 
 	return records
-
-	// printRecords(records)
 }
 
 
@@ -135,77 +117,6 @@ func doesEntryHaveParts(entry []string) bool {
 
 
 
-// The idea for the matcher function is to check the value and the
-// tags for each argument. For each match, a match rate will be
-// added to a collection. If the number of matches is greater than
-// the given limit, then the aggregate of the rates will be returned
-// as the record's overall match rate. The aggregate is used instead
-// of the average (sum of match rates / number of matches) because
-// it makes sense that a record that matches multiple times should
-// rate higher than those that don't.
-func makeMatcher(terms []string, lim int) func(Record) float64 {
-	matcher := func(record Record) float64 {
-		var match_rates []float64
-		matches := 0
-
-		strs := make([]string, 1, len(record.Tags) + 1)
-		strs[0] = record.Value
-		for o := 0; o < len(record.Tags); o++ {
-			strs = append(strs, record.Tags[o])
-		}
-		str_agg := strings.Join(strs, string(UnitSeparator))
-		// fmt.Printf("Aggregate line: %v\n", str_agg)
-
-		for o := 0; o < len(terms); o++ {
-			mult := strings.Count(str_agg, terms[o])
-
-			if mult == 0 {
-				match_rates = append(match_rates, 0.0)
-			} else {
-				matches += 1
-				match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) * float64(mult)) / float64(len([]rune(str_agg)))))
-			}
-
-			// fmt.Printf("Checking %v\n", record)
-
-			// if strings.Contains(record.Value, terms[o]) {
-			// 	// fmt.Printf("V %v contains %v\n", record.Value, terms[o])
-			// 	matches += 1
-			// 	match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) / float64(len([]rune(record.Value)))) * float64(strings.Count(record.Value, terms[o]))))
-			// } else {
-			// 	match_rates = append(match_rates, 0.0)
-			// }
-
-			// for i := 0; i < len(record.Tags); i++ {
-			// 	if strings.Contains(record.Tags[i], terms[o]) {
-			// 		matches += 1
-			// 		// fmt.Printf("T %v contains %v\n", record.Tags[i], terms[o])
-			// 		match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) / float64(len([]rune(record.Tags[i])))) * float64(strings.Count(record.Tags[i], terms[o]))))
-			// 	} else {
-			// 		match_rates = append(match_rates, 0.0)
-			// 	}
-			// }
-		}
-
-		if matches < lim {
-			return 0.0
-		} else {
-			match_rate := 0.0
-
-			for o := 0; o < len(match_rates); o++ {
-				match_rate += match_rates[o]
-			}
-
-			return (match_rate / float64(len(match_rates)))
-			// return match_rate
-		}
-	}
-
-	return matcher
-}
-
-
-
 func printRecords(records []Record) {
 	// This is the number of records.
 	m := len(records)
@@ -232,11 +143,43 @@ func printRecords(records []Record) {
 
 
 func promptForWantedRecord() []int {
-	// Print a prompt
-	// Read user input
-	// Split on spaces and commas, filter for integers, sort, make unique
-	// Return resulting slice
-	return []int{1, 2}
+	fmt.Print("Enter the number(s) of the record(s) you want: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+
+	ints := cleanWantedRecordsInput(input)
+	// fmt.Printf("Got (%v)\n", ints)
+
+	// return []int{1, 2}
+	return ints
+}
+
+
+
+func cleanWantedRecordsInput(input string) []int {
+	var clean []int
+	ref := make(map[string]bool)
+
+	// Note that the comma is in double-quotes. Those make it a
+	// string. Single-quotes make it a rune, which can't be used as
+	// a parameter to `Replace`.
+	parts := strings.Split(strings.Replace(input, ",", "", -1), " ")
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+
+		if num, err := strconv.Atoi(trimmed); err == nil {
+			if _, in_ref := ref[trimmed]; in_ref == false {
+				clean = append(clean, num)
+				ref[trimmed] = true
+			}
+		}
+	}
+
+	// Should the ints be sorted? Consider it.  #TODO
+
+	return clean
 }
 
 
@@ -256,8 +199,8 @@ func getWantedRecords(records []Record, input []int) []Record {
 
 
 
-func makeRecordReviewer(act func([]Record)) func([]Record) {
-	reviewer := func(records []Record) {
+func makeRecordSelector(act func([]Record)) func([]Record) {
+	selector := func(records []Record) {
 		printRecords(records)
 
 		input := promptForWantedRecord()
@@ -267,11 +210,11 @@ func makeRecordReviewer(act func([]Record)) func([]Record) {
 			noRecordsWanted()
 		} else {
 			act(wanted)
-			// Wrapup function (update wanteds' time and count, etc)
+			// Wrapup function (update wanteds' time and count, etc)  #TODO
 		}
 	}
 
-	return reviewer
+	return selector
 }
 
 
@@ -282,22 +225,6 @@ func makeRecordPiper(act string) func([]Record) {
 	}
 
 	return piper
-}
-
-
-
-func pipeRecordsToPbcopy(records []Record) {
-	pipeRecordsToExternalTool(records, PbcopyPath);
-}
-
-func pipeRecordsToOpen(records []Record) {
-	pipeRecordsToExternalTool(records, OpenPath);
-}
-
-func pipeRecordsToExternalTool(records []Record, tool string) {  // #TODO
-	for _, r := range records {
-		fmt.Printf("Would pipe record value (%v) to tool (%v)\n", r.Value, tool)
-	}
 }
 
 

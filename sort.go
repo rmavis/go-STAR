@@ -1,5 +1,9 @@
 package main
 
+import (
+	"sort"
+)
+
 
 
 
@@ -20,8 +24,6 @@ func (a ByMatchRate) Less(i, j int) bool {
 
 
 
-
-
 type ByDateCreated []Record
 
 func (a ByDateCreated) Len() int {
@@ -34,4 +36,29 @@ func (a ByDateCreated) Swap(i, j int) {
 
 func (a ByDateCreated) Less(i, j int) bool {
 	return a[i].Meta[0] < a[j].Meta[0]
+}
+
+
+
+
+
+func makeSorter(conf Config, action_code []int, terms []string) func([]Record) {
+	var sorter func([]Record)
+
+	switch {
+	case action_code[0] == 4:
+		sorter = func(records []Record) {
+			sort.Sort(ByDateCreated(records))
+		}
+	case len(terms) == 0 || conf.Action == "browse" || action_code[1] == 5:
+		sorter = func(records []Record) {
+			sort.Sort(sort.Reverse(ByDateCreated(records)))
+		}
+	default:
+		sorter = func(records []Record) {
+			sort.Sort(sort.Reverse(ByMatchRate(records)))
+		}
+	}
+
+	return sorter
 }
