@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
+	// "unicode/utf8"
 )
 
 
@@ -26,48 +28,22 @@ const UnitSeparator = ''    // Separates parts of parts (each tag from each tag
 
 
 
-func readRecords(matcher func(Record) float64, sorter func([]Record)) []Record {
-	// Need to update this to read the conf's .Store  #TODO
-	file_name := DefaultStoreFilePath()
-
-	records := readRecordsFromStore(file_name, matcher)
-	sorter(records)
-
-	return records
-}
 
 
-
-func readRecordsFromStore(file_name string, getMatchRate func(Record) float64) []Record {
-	file_handle, err := os.Open(file_name)
-	checkForError(err)
-	defer file_handle.Close()
-
-	reader := bufio.NewReader(file_handle)
-
+func readRecordsFromStore(file_name string, getMatchInfo func(Record) (float64, bool)) []Record {
 	var records []Record
 
-	for {
-		entry, last := readNextEntry(reader)
-		parts := splitEntry(entry)
+	act := func(record Record) {
+		match_rate, matches := getMatchInfo(record)
 
-		if (doesEntryHaveParts(parts)) {
-			record := makeRecordFromParts(parts)
-			match_rate := getMatchRate(record)
-
-			if match_rate > 0.0 {
-				record.MatchRate = match_rate
-				records = append(records, record)
-				// fmt.Printf("Record matches: %v / %v / %v / %v\n", record.Value, record.Tags, record.Meta, record.MatchRate)
-			}
-		} else {
-			// fmt.Printf("Record is missing components: %v\n", entry)
-		}
-
-		if last {
-			break;
+		if matches {
+			record.MatchRate = match_rate
+			records = append(records, record)
+			// fmt.Printf("Record matches: %v / %v / %v / %v\n", record.Value, record.Tags, record.Meta, record.MatchRate)
 		}
 	}
+
+	forEachRecordInStore(file_name, act)
 
 	return records
 }
@@ -95,7 +71,7 @@ func makeRecordFromParts(entry []string) Record {
 
 
 func splitEntry(entry string) []string {
-	fields := strings.Split(entry, string(RecordSeparator))
+	fields := strings.Split(strings.TrimSuffix(entry, string(GroupSeparator)), string(RecordSeparator))
 	return fields
 }
 
@@ -114,6 +90,22 @@ func doesEntryHaveParts(entry []string) bool {
 	} else {
 		return false
 	}
+}
+
+
+
+func joinRecord(record Record) string {
+	parts := []string{
+		record.Value,
+		string(RecordSeparator),
+		strings.Join(record.Tags, string(UnitSeparator)),
+		string(RecordSeparator),
+		strings.Join(record.Meta, string(UnitSeparator)),
+		string(GroupSeparator),
+		"\n",
+	}
+
+	return strings.Join(parts, "")
 }
 
 
@@ -138,13 +130,17 @@ func printRecords(records []Record) {
 		fmt.Printf("%v%v) %v\n%v%v\n",
 			spaces_top, (o + 1), records[o].Value,
 			spaces_bot, strings.Join(records[o].Tags, ", "))
+		// fmt.Printf("%v%v) %v%v\n%v%v\n",
+		// 	spaces_top, (o + 1), records[o].MatchRate, records[o].Value,
+		// 	spaces_bot, strings.Join(records[o].Tags, ", "))
 	}
 }
 
 
 
-func promptForWantedRecord() []int {
-	fmt.Print("Enter the number(s) of the record(s) you want: ")
+func promptForWantedRecord(verb string) []int {
+	fmt.Printf("%v%v these records: ", strings.ToUpper(string(verb[0])), string(verb[1:]))
+	// fmt.Print("Enter the number(s) of the record(s) you want: ")
 
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
@@ -152,7 +148,6 @@ func promptForWantedRecord() []int {
 	ints := cleanWantedRecordsInput(input)
 	// fmt.Printf("Got (%v)\n", ints)
 
-	// return []int{1, 2}
 	return ints
 }
 
@@ -165,7 +160,7 @@ func cleanWantedRecordsInput(input string) []int {
 	// Note that the comma is in double-quotes. Those make it a
 	// string. Single-quotes make it a rune, which can't be used as
 	// a parameter to `Replace`.
-	parts := strings.Split(strings.Replace(input, ",", "", -1), " ")
+	parts := strings.Split(strings.Replace(input, ",", " ", -1), " ")
 
 	for _, part := range parts {
 		trimmed := strings.TrimSpace(part)
@@ -177,8 +172,6 @@ func cleanWantedRecordsInput(input string) []int {
 			}
 		}
 	}
-
-	// Should the ints be sorted? Consider it.  #TODO
 
 	return clean
 }
@@ -200,22 +193,37 @@ func getWantedRecords(records []Record, input []int) []Record {
 
 
 
-func makeRecordSelector(act func([]Record)) func([]Record) {
+func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 	selector := func(records []Record) {
 		printRecords(records)
 
-		input := promptForWantedRecord()
+		input := promptForWantedRecord(prompt_verb)
 		wanted := getWantedRecords(records, input)
 
 		if len(wanted) == 0 {
-			noRecordsWanted()
+			noRecordsWanted(prompt_verb)
 		} else {
 			act(wanted)
-			// Wrapup function (update wanteds' time and count, etc)  #TODO
 		}
 	}
 
 	return selector
+}
+
+
+
+func makeActAndUpdater(conf Config, act func([]Record)) func([]Record) {
+	saver := func(file *os.File, record Record) {
+		file.WriteString(joinRecord(record))
+	}
+
+	updater := func(records []Record) {
+		updateWantedRecords(records)
+		updateStoreFile(conf.Store, records, saver)
+		act(records)
+	}
+
+	return updater
 }
 
 
@@ -230,16 +238,60 @@ func makeRecordPiper(act string) func([]Record) {
 
 
 
+func makeDeleter(conf Config) func([]Record) {
+	dels := func(_ *os.File, _ Record) {
+		// fmt.Printf("Not including entry in backup (%v)\n", record)
+	}
+
+	deleter := func(records []Record) {
+		updateStoreFile(conf.Store, records, dels)
+	}
+
+	return deleter
+}
+
+
+
 func editRecords(records []Record) {
+	// Make tmp file
+	// Print instructions to tmp file
+	// Print records to tmp file
+	// Open editor in tmp file
+	// Wait for editor to close
+	// Open temp file
+	// For each line, check for patterns of entry or tags
+	//   Numbers in each entry line are the indices for the matching records
+	//   Those numbers matter
+	// Make a slice of new Records
+	//   Update the values and tags for each index
+	//   Add new records for indices beyond the max
+	//   Remove records for indices no longer specified
+	// Compare new slice with existing?
+	//   To make "wanted" slice of records?
+	// Update store as normal with modified matching records as "wanted" records
 }
 
 
 
-func deleteRecords(records []Record) {
+func updateWantedRecords(records []Record) {
+	now := strconv.FormatInt(time.Now().Unix(), 10)
+
+	for _, record := range records {
+		switch {
+		case len(record.Meta) == 3:
+			old_count, err := strconv.Atoi(record.Meta[2])
+			checkForError(err)
+			record.Meta[2] = strconv.Itoa(old_count + 1)
+			record.Meta[1] = now
+		default:
+			fmt.Printf("Record is missing metadata! (%v) (%v)\n", record.Value, record.Meta)
+		}
+		// if utf8.RuneCountInString(record.Meta)
+	}
 }
 
 
 
-func noRecordsWanted() {
-	fmt.Printf("Nothing wanted.\n")
+func noRecordsWanted(verb string) {
+	fmt.Printf("Will %v nothing.\n", verb)
 }

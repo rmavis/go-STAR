@@ -42,15 +42,15 @@ func (a ByDateCreated) Less(i, j int) bool {
 
 
 
-func makeSorter(conf Config, action_code []int, terms []string) func([]Record) {
+func makeSorter(action_code []int) func([]Record) {
 	var sorter func([]Record)
 
 	switch {
-	case action_code[0] == 4:
+	case action_code[0] == 4:  // Dump in the order created.
 		sorter = func(records []Record) {
 			sort.Sort(ByDateCreated(records))
 		}
-	case len(terms) == 0 || conf.Action == "browse" || action_code[1] == 5:
+	case action_code[1] == 5:  // Browse recent-to-old.
 		sorter = func(records []Record) {
 			sort.Sort(sort.Reverse(ByDateCreated(records)))
 		}

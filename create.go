@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -40,27 +39,10 @@ func makeRecordFromInput(terms []string) Record {
 func appendRecordToStore(file_name string, record Record) {
 	file, err := os.OpenFile(file_name, os.O_APPEND|os.O_WRONLY, 0600)
 	checkForError(err)
+	defer file.Close()
 
 	entry := joinRecord(record)
 
 	_, err = file.WriteString(entry)
 	checkForError(err)
-
-	file.Close()
-}
-
-
-
-func joinRecord(record Record) string {
-	parts := []string{
-		record.Value,
-		string(RecordSeparator),
-		strings.Join(record.Tags, string(UnitSeparator)),
-		string(RecordSeparator),
-		strings.Join(record.Meta, string(UnitSeparator)),
-		string(GroupSeparator),
-		"\n",
-	}
-
-	return strings.Join(parts, "")
 }

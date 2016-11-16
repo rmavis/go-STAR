@@ -10,13 +10,16 @@ import (
 
 
 func makeSearchAction(conf Config, action_code []int, terms []string) func() {
+	// fmt.Printf("Action code: %v\n", action_code)
+
 	match_act := getMatchAction(conf, action_code)
 	match_lim := getMatchLim(conf, action_code, terms)
 	matcher := makeMatcher(terms, match_lim)
-	sorter := makeSorter(conf, action_code, terms)
+	sorter := makeSorter(action_code)
 
 	action := func() {
-		records := readRecords(matcher, sorter)
+		records := readRecordsFromStore(conf.Store, matcher)
+		sorter(records)
 		match_act(records)
 	}
 
@@ -35,27 +38,27 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 	case action_code[1] == 0:  // Read from config.
 		switch {
 		case conf.Action == "copy":  // "copy" and "open" are shortcuts.
-			act = makeRecordSelector(pipeRecordsToPbcopy)
+			act = makeRecordSelector("copy", makeActAndUpdater(conf, pipeRecordsToPbcopy))
 		case conf.Action == "open":
-			act = makeRecordSelector(pipeRecordsToOpen)
+			act = makeRecordSelector("open", makeActAndUpdater(conf, pipeRecordsToOpen))
 		case conf.Action == "browse" || conf.Action == "":
 			act = printRecords
 		default:                     // Any external command can be specified.
 			piper := makeRecordPiper(conf.Action)
-			act = makeRecordSelector(piper)
+			act = makeRecordSelector(conf.Action, makeActAndUpdater(conf, piper))
 		}
 
 	case action_code[1] == 1:  // pbcopy
-		act = makeRecordSelector(pipeRecordsToPbcopy)
+		act = makeRecordSelector("copy", makeActAndUpdater(conf, pipeRecordsToPbcopy))
 
 	case action_code[1] == 2:  // open
-		act = makeRecordSelector(pipeRecordsToOpen)
+		act = makeRecordSelector("open", makeActAndUpdater(conf, pipeRecordsToOpen))
 
 	case action_code[1] == 3:  // edit
-		act = makeRecordSelector(editRecords)
+		act = makeRecordSelector("edit", makeActAndUpdater(conf, editRecords))
 
 	case action_code[1] == 4:  // delete
-		act = makeRecordSelector(deleteRecords)
+		act = makeRecordSelector("delete", makeDeleter(conf))
 
 	case action_code[1] == 5:  // browse
 		act = printRecords
@@ -103,8 +106,8 @@ func getMatchLim(conf Config, action_code []int, terms []string) int {
 // of the average (sum of match rates / number of matches) because
 // it makes sense that a record that matches multiple times should
 // rate higher than those that don't.
-func makeMatcher(terms []string, lim int) func(Record) float64 {
-	matcher := func(record Record) float64 {
+func makeMatcher(terms []string, lim int) func(Record) (float64, bool) {
+	matcher := func(record Record) (float64, bool) {
 		var match_rates []float64
 		matches := 0
 
@@ -125,30 +128,10 @@ func makeMatcher(terms []string, lim int) func(Record) float64 {
 				matches += 1
 				match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) * float64(mult)) / float64(len([]rune(str_agg)))))
 			}
-
-			// fmt.Printf("Checking %v\n", record)
-
-			// if strings.Contains(record.Value, terms[o]) {
-			// 	// fmt.Printf("V %v contains %v\n", record.Value, terms[o])
-			// 	matches += 1
-			// 	match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) / float64(len([]rune(record.Value)))) * float64(strings.Count(record.Value, terms[o]))))
-			// } else {
-			// 	match_rates = append(match_rates, 0.0)
-			// }
-
-			// for i := 0; i < len(record.Tags); i++ {
-			// 	if strings.Contains(record.Tags[i], terms[o]) {
-			// 		matches += 1
-			// 		// fmt.Printf("T %v contains %v\n", record.Tags[i], terms[o])
-			// 		match_rates = append(match_rates, ((float64(len([]rune(terms[o]))) / float64(len([]rune(record.Tags[i])))) * float64(strings.Count(record.Tags[i], terms[o]))))
-			// 	} else {
-			// 		match_rates = append(match_rates, 0.0)
-			// 	}
-			// }
 		}
 
 		if matches < lim {
-			return 0.0
+			return 0.0, false;
 		} else {
 			match_rate := 0.0
 
@@ -156,7 +139,7 @@ func makeMatcher(terms []string, lim int) func(Record) float64 {
 				match_rate += match_rates[o]
 			}
 
-			return (match_rate / float64(len(match_rates)))
+			return (match_rate / float64(len(match_rates))), true;
 			// return match_rate
 		}
 	}
