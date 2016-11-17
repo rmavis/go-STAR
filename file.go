@@ -4,12 +4,34 @@ import (
 	"bufio"
 	// "fmt"
 	"os"
+	"os/user"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
 
+
+
+
+func getTempFileName(fx string) string {
+	usr, err := user.Current()
+	checkForError(err)
+
+	return os.TempDir() + "/" + usr.Name + "_star_" + fx + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".tmp"
+}
+
+
+
+func createFile(path string) *os.File {
+	file, err := os.Create(path)
+	checkForError(err)
+
+	file.Chmod(0644)
+
+	return file
+}
 
 
 
@@ -23,11 +45,16 @@ func doesFileExist(file string) bool {
 
 
 
-func createFile(path string) {
-	file, err := os.Create(path)
-	checkForError(err)
+func readNextEntry(reader *bufio.Reader, separator byte) (string, bool) {
+	record, err := reader.ReadBytes(separator)
+	last := false
 
-	file.Chmod(0644)
+	if err != nil {
+		last = true
+		// fmt.Printf("Error! %v (%v)\n", err, string(record))
+	}
+
+	return strings.TrimSpace(string(record)), last;
 }
 
 
@@ -42,26 +69,12 @@ func updateStoreFile(file_name string, records []Record, bkAct func(*os.File, Re
 		if (len(records) == 0) {
 			bk_file.WriteString(joinRecord(record))
 		} else {
-			x := len(records) - 1
 			bk_line := true
 
 			for n, chk := range records {
 				if ((chk.Value == record.Value) && (reflect.DeepEqual(chk.Tags, record.Tags))) {
 					bkAct(bk_file, chk)
-					// bk_file.WriteString(joinRecord(chk))
-
-					var new_records []Record
-					switch {
-					case n == 0:
-						new_records = records[1:]
-					case n == x:
-						new_records = records[0:n]
-					default:
-						new_records = records[0:n]
-						new_records = append(new_records, records[(n + 1):]...)
-					}
-
-					records = new_records
+					records = removeRecord(records, n)
 					bk_line = false
 					break
 				}
@@ -74,6 +87,8 @@ func updateStoreFile(file_name string, records []Record, bkAct func(*os.File, Re
 	}
 
 	forEachRecordInStore(file_name, act)
+
+	// If there are still records in `records`, will want to append those.  #TODO
 
 	// Get perms from store
 	// f_info, err := os.Stat(file_name)
@@ -98,7 +113,7 @@ func forEachRecordInStore(file_name string, actOnRecord func(Record)) {
 	reader := bufio.NewReader(file_handle)
 
 	for {
-		entry, last := readNextEntry(reader)
+		entry, last := readNextEntry(reader, GroupSeparator)
 		parts := splitEntry(entry)
 
 		if (doesEntryHaveParts(parts)) {

@@ -3,7 +3,9 @@ package main
 import (
     "bufio"
 	"fmt"
+	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -50,17 +52,17 @@ func readRecordsFromStore(file_name string, getMatchInfo func(Record) (float64, 
 
 
 
-func readNextEntry(reader *bufio.Reader) (string, bool) {
-	record, err := reader.ReadBytes(GroupSeparator)
-	last := false
+// func readNextEntry(reader *bufio.Reader) (string, bool) {
+// 	record, err := reader.ReadBytes(GroupSeparator)
+// 	last := false
 
-	if err != nil {
-		last = true
-		// fmt.Printf("Error! %v (%v)\n", err, string(record))
-	}
+// 	if err != nil {
+// 		last = true
+// 		// fmt.Printf("Error! %v (%v)\n", err, string(record))
+// 	}
 
-	return strings.TrimSpace(string(record)), last;
-}
+// 	return strings.TrimSpace(string(record)), last;
+// }
 
 
 
@@ -110,13 +112,41 @@ func joinRecord(record Record) string {
 
 
 
-func printRecords(records []Record) {
+func removeRecord(records []Record, index int) []Record {
+	var new_records []Record
+
+	switch {
+	case index == 0:
+		new_records = records[1:]
+	case index == (len(records) - 1):
+		new_records = records[0:index]
+	default:
+		new_records = records[0:index]
+		new_records = append(new_records, records[(index + 1):]...)
+	}
+
+	return new_records
+}
+
+
+
+func printRecordsToStdout(records []Record) {
+	printRecords(os.Stdout, records, "%v%v) %v\n%v%v\n")
+}
+
+
+
+func printRecordsToTempFile(records []Record, file *os.File) {
+	printRecords(file, records, "%v%v) %v\n%vTags: %v\n\n")
+}
+
+
+
+func printRecords(out io.Writer, records []Record, format string) {
 	// This is the number of records.
 	m := len(records)
 	// This is the number of digits in that number.
 	n := len(strconv.FormatInt(int64(m), 10))
-
-	// fmt.Printf("Number of records: %v. Number of digits: %v.\n", m, n)
 
 	spaces_bot := strings.Repeat(" ", (n + 2))
 
@@ -127,10 +157,11 @@ func printRecords(records []Record) {
 			spaces_top += strings.Repeat(" ", v)
 		}
 
-		fmt.Printf("%v%v) %v\n%v%v\n",
+		fmt.Fprintf(out, format,
 			spaces_top, (o + 1), records[o].Value,
 			spaces_bot, strings.Join(records[o].Tags, ", "))
-		// fmt.Printf("%v%v) %v%v\n%v%v\n",
+		// fmt.Fprintf(out
+		//  "%v%v) %v%v\n%v%v\n",
 		// 	spaces_top, (o + 1), records[o].MatchRate, records[o].Value,
 		// 	spaces_bot, strings.Join(records[o].Tags, ", "))
 	}
@@ -178,6 +209,26 @@ func cleanWantedRecordsInput(input string) []int {
 
 
 
+func cleanInputTags(input string) []string {
+	var clean []string
+	ref := make(map[string]bool)
+
+	parts := strings.Split(input, ",")
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+
+		if _, in_ref := ref[trimmed]; in_ref == false {
+			clean = append(clean, trimmed)
+			ref[trimmed] = true
+		}
+	}
+
+	return clean
+}
+
+
+
 func getWantedRecords(records []Record, input []int) []Record {
 	var wanted []Record
 	max := len(records)
@@ -195,7 +246,7 @@ func getWantedRecords(records []Record, input []int) []Record {
 
 func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 	selector := func(records []Record) {
-		printRecords(records)
+		printRecordsToStdout(records)
 
 		input := promptForWantedRecord(prompt_verb)
 		wanted := getWantedRecords(records, input)
@@ -252,23 +303,52 @@ func makeDeleter(conf Config) func([]Record) {
 
 
 
-func editRecords(records []Record) {
-	// Make tmp file
-	// Print instructions to tmp file
-	// Print records to tmp file
-	// Open editor in tmp file
-	// Wait for editor to close
-	// Open temp file
-	// For each line, check for patterns of entry or tags
-	//   Numbers in each entry line are the indices for the matching records
-	//   Those numbers matter
-	// Make a slice of new Records
-	//   Update the values and tags for each index
-	//   Add new records for indices beyond the max
-	//   Remove records for indices no longer specified
-	// Compare new slice with existing?
-	//   To make "wanted" slice of records?
-	// Update store as normal with modified matching records as "wanted" records
+func makeEditor(conf Config) func([]Record) {
+	ed := func(records []Record) {
+		// Make tmp file
+		tmp_name := getTempFileName("edit")
+		tmp_file := createFile(tmp_name)
+		// defer tmp_file.Close()
+
+		// Print instructions, records to tmp file
+		tmp_file.WriteString(EditFileInstructions)
+		printRecordsToTempFile(records, tmp_file)
+		tmp_file.Close()
+
+		// Open tmp file in editor
+		ed := checkEditor(conf.Editor)
+		pipeToToolAsArg(tmp_name, ed)
+
+		// Wait for editor to close
+
+		// Open temp file
+		ed_recs := parseRecordsFromTempFile(tmp_name)
+		mod_recs := collateRecordsByIndex(records, ed_recs)
+
+		// fmt.Printf("Parsed records from temp file `%v`:\n%v\n", tmp_name, mod_recs)
+
+		err := os.Remove(tmp_name)
+		checkForError(err)
+
+		saver := func(file *os.File, record Record) {
+			file.WriteString(joinRecord(record))
+		}
+
+		updateStoreFile(conf.Store, mod_recs, saver)
+
+		// For each line, check for patterns of entry or tags
+		//   Numbers in each entry line are the indices for the matching records
+		//   Those numbers matter
+		// Make a slice of new Records
+		//   Update the values and tags for each index
+		//   Add new records for indices beyond the max
+		//   Remove records for indices no longer specified
+		// Compare new slice with existing?
+		//   To make "wanted" slice of records?
+		// Update store as normal with modified matching records as "wanted" records
+	}
+
+	return ed
 }
 
 
@@ -294,4 +374,87 @@ func updateWantedRecords(records []Record) {
 
 func noRecordsWanted(verb string) {
 	fmt.Printf("Will %v nothing.\n", verb)
+}
+
+
+
+func parseRecordsFromTempFile(tmp_name string) map[int]Record {
+	tmp_file, err := os.Open(tmp_name)
+	checkForError(err)
+	defer tmp_file.Close()
+
+	reader := bufio.NewReader(tmp_file)
+
+	records := make(map[int]Record)
+
+	var index int
+	var value string
+	var tags []string
+	pairing := false
+
+	re_val := regexp.MustCompile("^[ ]*([0-9]+)\\)[ ]+(.+)$")
+	re_tag := regexp.MustCompile("^[ ]*(?:Tags:[ ]*)(.+)$")
+
+	for {
+		line, last := readNextEntry(reader, '\n')
+
+		if pairing && (line == "" || last) {
+			record := Record{}
+			record.Value = value
+			record.Tags = tags
+			records[index] = record
+			pairing = false
+		} else if n := re_val.FindStringSubmatch(line); n != nil {
+			if pairing {
+				record := Record{}
+				record.Value = value
+				record.Tags = tags
+				records[index] = record
+				pairing = false
+			}
+
+			chk, err := strconv.Atoi(n[1])
+			checkForError(err)
+			index = chk - 1
+			value = strings.TrimSpace(n[2])
+			pairing = true
+		} else if n := re_tag.FindStringSubmatch(line); n != nil {
+			tags = cleanInputTags(strings.TrimSpace(n[1]))
+		}
+
+		if last {
+			break;
+		}
+	}
+
+	return records
+}
+
+
+
+func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) []Record {
+	var collated []Record
+
+	// Replace existing records.
+	for index, old_rec := range ref_recs {
+		new_rec, in := new_recs[index]
+
+		if in {
+			new_rec.Meta = old_rec.Meta
+			collated = append(collated, new_rec)
+			delete(new_recs, index)
+		} else {
+			collated = append(collated, old_rec)
+		}
+	}
+
+	// Add new records.
+	if len(new_recs) > 0 {
+		for _, record := range new_recs {
+			record.Meta = []string{strconv.FormatInt(time.Now().Unix(), 10), "0", "0"}
+			collated = append(collated, record)
+		}
+	}
+
+	return collated
 }

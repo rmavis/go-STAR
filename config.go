@@ -29,6 +29,28 @@ const PagerPath = "/usr/bin/less"
 const PbcopyPath = "/usr/bin/pbcopy"
 
 
+const EditFileInstructions = `# STAR will read this file and update its store with the new values.
+# 
+# An entry in the store file includes two lines in this file, so STAR
+# will expect to read lines from this file in pairs that look like:
+#
+#   1) http://settlement.arc.nasa.gov/70sArtHiRes/70sArt/art.html
+#      Tags: art, NASA, space
+#
+# Those parts are:
+# - At the start of a line (spaces excluded) a number followed by a closing parenthesis
+# - The entry, being the string that gets copied, opened, etc
+# - At the start of a line (spaces excluded) the word "Tags" followed by a colon
+# - The tags, being a comma-separated list
+#
+# You can remove entries from the store file by deleting the line
+# pairs, and you can add entries by creating more.
+#
+# Lines that start with a pound sign will be ignored.
+
+`
+
+
 
 func userHome() string {
 	usr, err := user.Current()
@@ -146,5 +168,15 @@ func checkFilterMode(_mode string) string {
 		return _mode
 	} else {
 		return DefaultFilterMode
+	}
+}
+
+
+
+func checkEditor(ed string) string {
+	if ed == "" {
+		return getEnv("EDITOR", DefaultEditorPath)
+	} else {
+		return ed
 	}
 }
