@@ -170,17 +170,14 @@ func printRecords(out io.Writer, records []Record, format string) {
 
 
 
-func promptForWantedRecord(verb string) []int {
+func promptForWantedRecord(verb string) string {
 	fmt.Printf("%v%v these records: ", strings.ToUpper(string(verb[0])), string(verb[1:]))
 	// fmt.Print("Enter the number(s) of the record(s) you want: ")
 
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
 
-	ints := cleanWantedRecordsInput(input)
-	// fmt.Printf("Got (%v)\n", ints)
-
-	return ints
+	return strings.TrimSpace(input)
 }
 
 
@@ -230,17 +227,23 @@ func cleanInputTags(input string) []string {
 
 
 
-func getWantedRecords(records []Record, input []int) []Record {
-	var wanted []Record
-	max := len(records)
+func getWantedRecords(records []Record, input string) []Record {
+	if strings.ToLower(input) == "all" {
+		return records
+	} else {
+		ints := cleanWantedRecordsInput(input)
 
-	for _, i := range input {
-		if i <= max {
-			wanted = append(wanted, records[(i - 1)])
+		var wanted []Record
+		max := len(records)
+
+		for _, i := range ints {
+			if i <= max {
+				wanted = append(wanted, records[(i - 1)])
+			}
 		}
-	}
 
-	return wanted
+		return wanted
+	}
 }
 
 
