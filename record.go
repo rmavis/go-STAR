@@ -356,7 +356,7 @@ func makeEditor(conf Config) func([]Record) {
 		ed_recs := parseRecordsFromTempFile(tmp_name)
 		mod_recs, new_recs := collateRecordsByIndex(records, ed_recs)
 
-		fmt.Printf("Parsed records from temp file `%v`:\n%v\n%v\n", tmp_name, mod_recs, new_recs)
+		// fmt.Printf("Parsed records from temp file `%v`:\n%v\n%v\n", tmp_name, mod_recs, new_recs)
 
 		bk := func(bk_file *os.File) func(Record) {
 			_bk := func(record Record) {
