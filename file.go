@@ -5,7 +5,6 @@ import (
 	// "fmt"
 	"os"
 	"os/user"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -59,34 +58,15 @@ func readNextEntry(reader *bufio.Reader, separator byte) (string, bool) {
 
 
 
-func updateStoreFile(file_name string, records []Record, bkAct func(*os.File, Record)) {
+func updateStoreFile(file_name string, bkMaker func(*os.File) func(Record)) {
 	bk_name := file_name + "_bk_" + strconv.FormatInt(time.Now().Unix(), 10)
 	bk_file, err := os.Create(bk_name)
 	checkForError(err)
 	defer bk_file.Close()
 
-	act := func(record Record) {
-		if (len(records) == 0) {
-			bk_file.WriteString(joinRecord(record))
-		} else {
-			bk_line := true
+	updater := bkMaker(bk_file)
 
-			for n, chk := range records {
-				if ((chk.Value == record.Value) && (reflect.DeepEqual(chk.Tags, record.Tags))) {
-					bkAct(bk_file, chk)
-					records = removeRecord(records, n)
-					bk_line = false
-					break
-				}
-			}
-
-			if bk_line {
-				bk_file.WriteString(joinRecord(record))
-			}
-		}
-	}
-
-	forEachRecordInStore(file_name, act)
+	forEachRecordInStore(file_name, updater)
 
 	// If there are still records in `records`, will want to append those.  #TODO
 
@@ -126,4 +106,11 @@ func forEachRecordInStore(file_name string, actOnRecord func(Record)) {
 			break;
 		}
 	}
+}
+
+
+
+func saveRecordToFile(file *os.File, record Record) {
+	_, err := file.WriteString(joinRecord(record))
+	checkForError(err)
 }

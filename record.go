@@ -1,10 +1,11 @@
 package main
 
 import (
-    "bufio"
+	"bufio"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -264,13 +265,9 @@ func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 
 
 func makeActAndUpdater(conf Config, act func([]Record)) func([]Record) {
-	saver := func(file *os.File, record Record) {
-		file.WriteString(joinRecord(record))
-	}
-
 	updater := func(records []Record) {
 		updateWantedRecords(records)
-		updateStoreFile(conf.Store, records, saver)
+		updateStoreFile(conf.Store, makeBackupUpdater(records, saveRecordToFile))
 		act(records)
 	}
 
@@ -295,10 +292,41 @@ func makeDeleter(conf Config) func([]Record) {
 	}
 
 	deleter := func(records []Record) {
-		updateStoreFile(conf.Store, records, dels)
+		updateStoreFile(conf.Store, makeBackupUpdater(records, dels))
 	}
 
 	return deleter
+}
+
+
+
+func makeBackupUpdater(records []Record, bkAct func(*os.File, Record)) func(*os.File) func(Record) {
+	bk := func(bk_file *os.File) func(Record) {
+		_bk := func(record Record) {
+			if (len(records) == 0) {
+				bk_file.WriteString(joinRecord(record))
+			} else {
+				bk_line := true
+
+				for n, chk := range records {
+					if ((chk.Value == record.Value) && (reflect.DeepEqual(chk.Tags, record.Tags))) {
+						bkAct(bk_file, record)
+						records = removeRecord(records, n)
+						bk_line = false
+						break
+					}
+				}
+
+				if bk_line {
+					bk_file.WriteString(joinRecord(record))
+				}
+			}
+		}
+
+		return _bk
+	}
+
+	return bk
 }
 
 
@@ -323,18 +351,57 @@ func makeEditor(conf Config) func([]Record) {
 
 		// Open temp file
 		ed_recs := parseRecordsFromTempFile(tmp_name)
-		mod_recs := collateRecordsByIndex(records, ed_recs)
+		mod_recs, new_recs := collateRecordsByIndex(records, ed_recs)
 
-		// fmt.Printf("Parsed records from temp file `%v`:\n%v\n", tmp_name, mod_recs)
+		fmt.Printf("Parsed records from temp file `%v`:\n%v\n%v\n", tmp_name, mod_recs, new_recs)
+
+		bk := func(bk_file *os.File) func(Record) {
+			_bk := func(record Record) {
+				if (len(mod_recs) == 0) {
+					bk_file.WriteString(joinRecord(record))
+				} else {
+					bk_line := true
+
+					for n, mod := range mod_recs {
+						if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
+							bk_file.WriteString(joinRecord(mod[1]))
+
+							var new_mods [][]Record
+							switch {
+							case n == 0:
+								new_mods = mod_recs[1:]
+							case n == (len(mod_recs) - 1):
+								new_mods = mod_recs[0:n]
+							default:
+								new_mods = mod_recs[0:n]
+								new_mods = append(new_mods, mod_recs[(n + 1):]...)
+							}
+							mod_recs = new_mods
+
+							bk_line = false
+							break
+						}
+					}
+
+					if bk_line {
+						bk_file.WriteString(joinRecord(record))
+					}
+				}
+			}
+
+			return _bk
+		}
+
+		updateStoreFile(conf.Store, bk)
+
+		if len(new_recs) > 0 {
+			appendRecordsToStore(conf.Store, new_recs)
+		}
 
 		err := os.Remove(tmp_name)
 		checkForError(err)
 
-		saver := func(file *os.File, record Record) {
-			file.WriteString(joinRecord(record))
-		}
-
-		updateStoreFile(conf.Store, mod_recs, saver)
+		// updateStoreFile(conf.Store, mod_recs, saveRecordToFile)
 
 		// For each line, check for patterns of entry or tags
 		//   Numbers in each entry line are the indices for the matching records
@@ -432,29 +499,25 @@ func parseRecordsFromTempFile(tmp_name string) map[int]Record {
 
 
 
-func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) []Record {
-	var collated []Record
-
-	// Replace existing records.
+func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Record, []Record) {
+	var collated [][]Record
 	for index, old_rec := range ref_recs {
 		new_rec, in := new_recs[index]
 
 		if in {
 			new_rec.Meta = old_rec.Meta
-			collated = append(collated, new_rec)
+			collated = append(collated, []Record{old_rec, new_rec})
 			delete(new_recs, index)
-		} else {
-			collated = append(collated, old_rec)
 		}
 	}
 
-	// Add new records.
+	var additions []Record
 	if len(new_recs) > 0 {
 		for _, record := range new_recs {
 			record.Meta = []string{strconv.FormatInt(time.Now().Unix(), 10), "0", "0"}
-			collated = append(collated, record)
+			additions = append(additions, record)
 		}
 	}
 
-	return collated
+	return collated, additions
 }

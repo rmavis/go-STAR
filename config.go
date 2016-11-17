@@ -155,7 +155,8 @@ func checkStoreFile(_path string) string {
 	}
 
 	if !doesFileExist(abs_path) {
-		createFile(abs_path)
+		file := createFile(abs_path)
+		file.Close()
 	}
 
 	return abs_path

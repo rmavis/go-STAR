@@ -13,7 +13,7 @@ import (
 func makeCreateAction(conf Config, action_code []int, terms []string) func() {
 	action := func() {
 		record := makeRecordFromInput(terms)
-		appendRecordToStore(conf.Store, record)
+		appendRecordsToStore(conf.Store, []Record{record})
 	}
 
 	return action
@@ -36,13 +36,12 @@ func makeRecordFromInput(terms []string) Record {
 
 
 
-func appendRecordToStore(file_name string, record Record) {
+func appendRecordsToStore(file_name string, records []Record) {
 	file, err := os.OpenFile(file_name, os.O_APPEND|os.O_WRONLY, 0600)
 	checkForError(err)
 	defer file.Close()
 
-	entry := joinRecord(record)
-
-	_, err = file.WriteString(entry)
-	checkForError(err)
+	for _, record := range records {
+		saveRecordToFile(file, record)
+	}
 }
