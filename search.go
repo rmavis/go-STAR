@@ -9,6 +9,11 @@ import (
 
 
 
+// makeSearchAction returns a multi-part action function that follow
+// the pattern of: read records from file, search those records with
+// the given terms, print the matches, prompt for the wanted records,
+// then act on those wanted records. The final action taken on the
+// wanted records is determined by the given action code.
 func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 	// fmt.Printf("Action code: %v\n", action_code)
 
@@ -28,6 +33,11 @@ func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 
 
 
+// getMatchAction returns a function that acts on a slice of Records.
+// This function will be the the final action taken on the wanted
+// records as specified in the multi-part search action function. The
+// user's config and the action code are required to create the
+// context/scope for the final action.
 func getMatchAction(conf Config, action_code []int) func([]Record) {
 	var act func([]Record)
 
@@ -72,6 +82,10 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 
 
 
+// getMatchLim returns an integer that specifies the number of
+// matches that must occur between the given terms and the scanned
+// Records for a Record to "match" the terms. This value can depend
+// on the user's config, the action code, and the number of terms.
 func getMatchLim(conf Config, action_code []int, terms []string) int {
 	var lim int
 
@@ -98,6 +112,8 @@ func getMatchLim(conf Config, action_code []int, terms []string) int {
 
 
 
+// makeMatcher returns a function that can be called in the record-
+// reading process to determine if the read record "matches".
 // The idea for the matcher function is to check the value and the
 // tags for each argument. For each match, a match rate will be
 // added to a collection. If the number of matches is greater than

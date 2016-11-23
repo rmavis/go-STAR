@@ -39,6 +39,12 @@ const EditFileInstructions = `# STAR will read this file and update its store wi
 
 
 
+// makeEditor returns the Edit search action function: the returned
+// function will receive the slice of wanted Records and run the edit
+// routine of printing the records to a temp file, reading & parsing
+// that temp file, and incorporating the changes into the updated
+// store file. Through this process records can be updated and added
+// but not deleted.
 func makeEditor(conf Config) func([]Record) {
 	ed := func(records []Record) {
 		// Make tmp file
@@ -103,7 +109,7 @@ func makeEditor(conf Config) func([]Record) {
 		updateStoreFile(conf.Store, bk)
 
 		if len(new_recs) > 0 {
-			appendRecordsToStore(conf.Store, new_recs)
+			appendRecordsToFile(conf.Store, new_recs)
 		}
 
 		err := os.Remove(tmp_name)
@@ -128,6 +134,13 @@ func makeEditor(conf Config) func([]Record) {
 
 
 
+// parseRecordsFromTempFile reads the file named by the given string
+// and translates that data into a map of Records, which it returns.
+// A map is used instead of a slice because, in the edit file, each
+// record will be preceded by a number, as they are when printed in
+// the terminal. That number corresponds to an index in the slice of
+// wanted Records, and that's how the updates are paired with the
+// existing Records.
 func parseRecordsFromTempFile(tmp_name string) map[int]Record {
 	tmp_file, err := os.Open(tmp_name)
 	checkForError(err)
@@ -182,6 +195,10 @@ func parseRecordsFromTempFile(tmp_name string) map[int]Record {
 
 
 
+// collateRecordsByIndex pairs the Records parsed from the edit file
+// with the slice of wanted Records. If Records are present that do
+// not correspond to the slice of wanted Records, then those are new
+// Records, and they'll be added to the updated store file.
 func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Record, []Record) {
 	var collated [][]Record
 	for index, old_rec := range ref_recs {
@@ -207,6 +224,8 @@ func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Reco
 
 
 
+// cleanInputTags transforms the string of tags from the edit file
+// into a slice of strings that can be used in the Record structure.
 func cleanInputTags(input string) []string {
 	var clean []string
 	ref := make(map[string]bool)

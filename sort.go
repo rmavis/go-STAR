@@ -23,6 +23,9 @@ func (a ByMatchRate) Less(i, j int) bool {
 }
 
 
+// The ByMatchRate and ByDateCreated types and methods are used
+// to sort Records by the specified criteria.
+
 
 type ByDateCreated []Record
 
@@ -42,6 +45,8 @@ func (a ByDateCreated) Less(i, j int) bool {
 
 
 
+// makeSorter returns the sorting function used in the multi-part
+// Search action function.
 func makeSorter(action_code []int) func([]Record) {
 	var sorter func([]Record)
 

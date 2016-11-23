@@ -23,7 +23,7 @@ func main() {
 	case action_code[0] == 1:  // search
 		action = makeSearchAction(readConfig(), action_code, terms)
 	case action_code[0] == 2:  // create
-		action = makeCreateAction(readConfig(), action_code, terms)
+		action = makeCreateAction(readConfig(), terms)
 	case action_code[0] == 3:  // help
 		action = func() {fmt.Printf("Would make `help` action.")}
 	case action_code[0] == 4:  // dump
