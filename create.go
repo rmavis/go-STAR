@@ -25,10 +25,7 @@ func makeRecordFromInput(terms []string) Record {
 	val := terms[0]
 	tags := terms[1:]
 
-	// t := time.Now()
-	// u := t.Unix()
 	s := strconv.FormatInt(time.Now().Unix(), 10)
-
 	times := []string{s, "0", "0"}
 
 	return Record{val, tags, times, 0.0}

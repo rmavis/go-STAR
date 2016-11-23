@@ -1,4 +1,4 @@
-* Todo [4/7]
+* Todo [4/8]
   Always: grep -i "todo" *.go
   - [X] Create records
   - [X] Delete records
@@ -8,9 +8,10 @@
   - [X] Edit records
     Will need to pass an additional parameter to `updateStoreFile`. It will be a function that determines whether the record from the store "matches" the record in question.
     Will need to expand maybe `collateRecordsByIndex` to collate and return a slice of slices of records: the first element in each subslice will be the old one, and that will be the one to compare on, and the second element in each subslice will be the new one, and that will be the one that gets saved to the store.
-  - [ ] Improved documentation
   - [ ] Refactor / reorganize / clean code
   - [ ] Don't edit records if they haven't been changed
+  - [ ] Improved documentation
+  - [ ] New readme
 
 
 

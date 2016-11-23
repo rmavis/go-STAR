@@ -15,26 +15,12 @@ import (
 
 
 
-func pipeRecordsToPbcopy(records []Record) {
-	// pipeRecordsToExternalTool(records, PbcopyPath);
-
-	for _, r := range records {
-		pipeToToolAsStdin(r.Value, PbcopyPath)
+func makeRecordPiper(act string) func([]Record) {
+	piper := func(records []Record) {
+		pipeRecordsToExternalTool(records, act)
 	}
-}
 
-
-
-func pipeRecordsToOpen(records []Record) {
-	pipeRecordsToExternalTool(records, OpenPath);
-}
-
-
-
-func pipeRecordsToExternalTool(records []Record, tool string) {
-	for _, r := range records {
-		pipeToToolAsArg(r.Value, tool)
-	}
+	return piper
 }
 
 
@@ -60,6 +46,30 @@ func pipeToToolAsStdin(str string, tool string) {
 	}
 
 	runCommand(cmd, printErr)
+}
+
+
+
+func pipeRecordsToPbcopy(records []Record) {
+	// pipeRecordsToExternalTool(records, PbcopyPath);
+
+	for _, r := range records {
+		pipeToToolAsStdin(r.Value, PbcopyPath)
+	}
+}
+
+
+
+func pipeRecordsToOpen(records []Record) {
+	pipeRecordsToExternalTool(records, OpenPath);
+}
+
+
+
+func pipeRecordsToExternalTool(records []Record, tool string) {
+	for _, r := range records {
+		pipeToToolAsArg(r.Value, tool)
+	}
 }
 
 

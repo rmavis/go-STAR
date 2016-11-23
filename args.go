@@ -1,26 +1,31 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
 
 
-
-
+// ArgPair is a structure that pairs a string -- the arg given by the
+// user on the command line -- with a function that will parse that
+// arg and return an appropriate action code.
 type ArgPair struct {
 	Arg string
 	Parse func (string) []int
 }
 
 
-
+// actionCodeHelpCommands returns the action code for printing the
+// basic help message. This is necessary because Go doesn't allow
+// slices to be constants.
 func actionCodeHelpCommands() []int {
 	return []int{3, 1, 0}
 }
 
 
+// actionCodeDefaultSearch returns the action code for the basic
+// search functionality. This is necessary because Go doesn't allow
+// slices to be constants.
 func actionCodeDefaultSearch() []int {
 	return []int{1, 0, 0}
 }
@@ -34,8 +39,8 @@ func actionCodeDefaultSearch() []int {
 // intent, and a slice of strings that, if present, will affect the
 // action -- as search terms, or new inputs, or whatever.
 func parseArgs(args []string) ([]int, []string) {
+	// If there are no args, then assume help is needed.
 	if len(args) == 0 {
-		fmt.Printf("No args given: using code %v\n", actionCodeHelpCommands())
 		var empty_str []string
 		return actionCodeHelpCommands(), empty_str
 	}
@@ -52,10 +57,11 @@ func parseArgs(args []string) ([]int, []string) {
 	//   ['a', 'c', 'all', 'commands']
 	var args_use []ArgPair
 
-	// This is the default action, set here in case the only args
-	// are search terms. If arguments modify this, the result will
-	// be a sort of merged-up action combining the last action with
-	// all usable aspects of prior actions.
+	// This is the default action, set here in case the only args are
+	// search terms, which is likely the most common use case. Other
+	// arguments can modify this. If they do, the final action will
+	// be the merged result of the last with all usable aspects of
+	// prior actions.
 	act := actionCodeDefaultSearch()
 
 	// This will contain the strings to search for, AKA non-action
@@ -64,28 +70,26 @@ func parseArgs(args []string) ([]int, []string) {
 
 out:
 	for o := 0; o < len(args); o++ {
-		// Arguments start with dashes.
+		// Command switches start with dashes.
 		if args[o][0] == '-' {
 			arg := strings.ToLower(args[o])
 
-			// Long-form args start with two dashes.
+			// Long-form switches start with two.
 			if arg[1] == '-' {
 				arg = strings.Replace(arg, string('-'), "", -1)
-				_, present := args_ref[arg]
 
-				if present == false {
+				if _, present := args_ref[arg]; present == false {
 					args_ref[arg] = true
 					args_use = append(args_use, ArgPair{arg, getActFromWord})
 				}
 			} else {
-				// Short-form args start with one.
+				// Short-form switches start with one.
 				arg = strings.Replace(arg, string('-'), "", -1)
 
 				for i := 0; i < len(arg); i++ {
 					char := string(arg[i])
-					_, present := args_ref[char]
 
-					if present == false {
+					if _, present := args_ref[char]; present == false {
 						args_ref[char] = true
 						args_use = append(args_use, ArgPair{char, getActFromChar})
 					}
@@ -116,7 +120,8 @@ out:
 
 
 // checkShortFormArgs receives a string in which each character
-// represents an argument.
+// represents an argument and returns a slice of ints that encodes
+// the corresponding action.
 func checkShortFormArgs(args string) []int {
 	if len(args) == 1 {
 		return getActFromChar(string(args[0]))
@@ -136,6 +141,10 @@ func checkShortFormArgs(args string) []int {
 
 
 
+// getActFromChar receives a string, being a short-form command-line
+// switch, and returns a slice of ints that encodes the corresponding
+// action. 0s in the action code indicate that an int from a prior
+// action code can be merged in at that location.
 func getActFromChar(arg string) []int {
 	var act []int
 
@@ -179,6 +188,10 @@ func getActFromChar(arg string) []int {
 
 
 
+// getActFromWord receives a string, being a long-form command-line
+// switch, and returns a slice of ints that encodes the corresponding
+// action. 0s in the action code indicate that an int from a prior
+// action code can be merged in at that location.
 func getActFromWord(arg string) []int {
 	var act []int
 
@@ -222,18 +235,22 @@ func getActFromWord(arg string) []int {
 
 
 
+// mergeActionCodes receives an action code and a list of action
+// codes and returns an action code. For each 0 in the single action
+// code, a non-zero in that place will be looked for in each code in
+// the list, and the first non-zero will be substituted in its place.
 // A non-zero int in an action code indicates a stated intent.
-// A zero indicates that the previous stated intent should be used
-// in that place or, if there are none, the appropriate default.
+// The list should be considered a pool that can be merged into the
+// single. It should be ordered oldest to most recent.
 func mergeActionCodes(act []int, acts [][]int) []int {
 	new := act
-
-	// fmt.Printf("Merging %v into %v\n", act, acts)
 
 	for o := 0; o < len(new); o++ {
 		if new[o] == 0 {
 		out:
 			for i := len(acts) - 1; i >= 0; i-- {
+				// The zeroth position is checked because only codes
+				// for the same action can be merged.
 				if acts[i][0] == new[0] && acts[i][o] != 0 {
 					new[o] = acts[i][o]
 					break out;

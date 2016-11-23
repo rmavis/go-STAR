@@ -14,46 +14,27 @@ import (
 
 
 
-func getTempFileName(fx string) string {
-	usr, err := user.Current()
-	checkForError(err)
-
-	return os.TempDir() + "/" + usr.Name + "_star_" + fx + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".tmp"
-}
+//
+// Functions for reading and acting on records in the store file.
+//
 
 
+func readRecordsFromFile(file_name string, getMatchInfo func(Record) (float64, bool)) []Record {
+	var records []Record
 
-func createFile(path string) *os.File {
-	file, err := os.Create(path)
-	checkForError(err)
+	act := func(record Record) {
+		match_rate, matches := getMatchInfo(record)
 
-	file.Chmod(0644)
-
-	return file
-}
-
-
-
-func doesFileExist(file string) bool {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return false
-	} else {
-		return true
-	}
-}
-
-
-
-func readNextEntry(reader *bufio.Reader, separator byte) (string, bool) {
-	record, err := reader.ReadBytes(separator)
-	last := false
-
-	if err != nil {
-		last = true
-		// fmt.Printf("Error! %v (%v)\n", err, string(record))
+		if matches {
+			record.MatchRate = match_rate
+			records = append(records, record)
+			// fmt.Printf("Record matches: %v / %v / %v / %v\n", record.Value, record.Tags, record.Meta, record.MatchRate)
+		}
 	}
 
-	return strings.TrimSpace(string(record)), last;
+	forEachRecordInStore(file_name, act)
+
+	return records
 }
 
 
@@ -110,7 +91,58 @@ func forEachRecordInStore(file_name string, actOnRecord func(Record)) {
 
 
 
+
+
+// 
+// Utility functions.
+//
+
+
+func readNextEntry(reader *bufio.Reader, separator byte) (string, bool) {
+	record, err := reader.ReadBytes(separator)
+	last := false
+
+	if err != nil {
+		last = true
+		// fmt.Printf("Error! %v (%v)\n", err, string(record))
+	}
+
+	return strings.TrimSpace(string(record)), last;
+}
+
+
+
 func saveRecordToFile(file *os.File, record Record) {
 	_, err := file.WriteString(joinRecord(record))
 	checkForError(err)
+}
+
+
+
+func getTempFileName(fx string) string {
+	usr, err := user.Current()
+	checkForError(err)
+
+	return os.TempDir() + "/" + usr.Name + "_star_" + fx + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".tmp"
+}
+
+
+
+func createFile(path string) *os.File {
+	file, err := os.Create(path)
+	checkForError(err)
+
+	file.Chmod(0644)
+
+	return file
+}
+
+
+
+func doesFileExist(file string) bool {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
 }

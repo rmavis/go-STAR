@@ -18,7 +18,7 @@ func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 	sorter := makeSorter(action_code)
 
 	action := func() {
-		records := readRecordsFromStore(conf.Store, matcher)
+		records := readRecordsFromFile(conf.Store, matcher)
 		sorter(records)
 		match_act(records)
 	}
