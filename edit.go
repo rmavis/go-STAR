@@ -66,47 +66,9 @@ func makeEditor(conf Config) func([]Record) {
 		// Open temp file
 		ed_recs := parseRecordsFromTempFile(tmp_name)
 		mod_recs, new_recs := collateRecordsByIndex(records, ed_recs)
-
 		// fmt.Printf("Parsed records from temp file `%v`:\n%v\n%v\n", tmp_name, mod_recs, new_recs)
 
-		bk := func(bk_file *os.File) func(Record) {
-			_bk := func(record Record) {
-				if (len(mod_recs) == 0) {
-					bk_file.WriteString(joinRecord(record))
-				} else {
-					bk_line := true
-
-					for n, mod := range mod_recs {
-						if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
-							bk_file.WriteString(joinRecord(mod[1]))
-
-							var new_mods [][]Record
-							switch {
-							case n == 0:
-								new_mods = mod_recs[1:]
-							case n == (len(mod_recs) - 1):
-								new_mods = mod_recs[0:n]
-							default:
-								new_mods = mod_recs[0:n]
-								new_mods = append(new_mods, mod_recs[(n + 1):]...)
-							}
-							mod_recs = new_mods
-
-							bk_line = false
-							break
-						}
-					}
-
-					if bk_line {
-						bk_file.WriteString(joinRecord(record))
-					}
-				}
-			}
-
-			return _bk
-		}
-
-		updateStoreFile(conf.Store, bk)
+		updateStoreFile(conf.Store, makeEditUpdater(mod_recs))
 
 		if len(new_recs) > 0 {
 			appendRecordsToFile(conf.Store, new_recs)
@@ -130,6 +92,56 @@ func makeEditor(conf Config) func([]Record) {
 	}
 
 	return ed
+}
+
+
+
+// makeEditUpdater does the same thing as `makeBackupUpdater` except
+// it operates on pairs of Records instead of individuals. For each
+// pair, the first is the old entry, used for comparison, and the
+// second is the new one, which gets saved in place of the old one.
+func makeEditUpdater(rec_pairs [][]Record) func(*os.File) func(Record) {
+	bk := func(bk_file *os.File) func(Record) {
+		_bk := func(record Record) {
+			if (len(rec_pairs) == 0) {
+				saveRecordToFile(bk_file, record)
+				// bk_file.WriteString(joinRecord(record))
+			} else {
+				bk_line := true
+
+				for n, mod := range rec_pairs {
+					if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
+						saveRecordToFile(bk_file, mod[1])
+						// bk_file.WriteString(joinRecord(mod[1]))
+
+						var new_mods [][]Record
+						switch {
+						case n == 0:
+							new_mods = rec_pairs[1:]
+						case n == (len(rec_pairs) - 1):
+							new_mods = rec_pairs[0:n]
+						default:
+							new_mods = rec_pairs[0:n]
+							new_mods = append(new_mods, rec_pairs[(n + 1):]...)
+						}
+						rec_pairs = new_mods
+
+						bk_line = false
+						break
+					}
+				}
+
+				if bk_line {
+					saveRecordToFile(bk_file, record)
+					// bk_file.WriteString(joinRecord(record))
+				}
+			}
+		}
+
+		return _bk
+	}
+
+	return bk
 }
 
 

@@ -62,7 +62,8 @@ func makeBackupUpdater(records []Record, bkAct func(*os.File, Record)) func(*os.
 	bk := func(bk_file *os.File) func(Record) {
 		_bk := func(record Record) {
 			if (len(records) == 0) {
-				bk_file.WriteString(joinRecord(record))
+				saveRecordToFile(bk_file, record)
+				// bk_file.WriteString(joinRecord(record))
 			} else {
 				bk_line := true
 
@@ -76,7 +77,8 @@ func makeBackupUpdater(records []Record, bkAct func(*os.File, Record)) func(*os.
 				}
 
 				if bk_line {
-					bk_file.WriteString(joinRecord(record))
+					saveRecordToFile(bk_file, record)
+					// bk_file.WriteString(joinRecord(record))
 				}
 			}
 		}
