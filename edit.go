@@ -76,19 +76,6 @@ func makeEditor(conf Config) func([]Record) {
 
 		err := os.Remove(tmp_name)
 		checkForError(err)
-
-		// updateStoreFile(conf.Store, mod_recs, saveRecordToFile)
-
-		// For each line, check for patterns of entry or tags
-		//   Numbers in each entry line are the indices for the matching records
-		//   Those numbers matter
-		// Make a slice of new Records
-		//   Update the values and tags for each index
-		//   Add new records for indices beyond the max
-		//   Remove records for indices no longer specified
-		// Compare new slice with existing?
-		//   To make "wanted" slice of records?
-		// Update store as normal with modified matching records as "wanted" records
 	}
 
 	return ed
@@ -105,14 +92,12 @@ func makeEditUpdater(rec_pairs [][]Record) func(*os.File) func(Record) {
 		_bk := func(record Record) {
 			if (len(rec_pairs) == 0) {
 				saveRecordToFile(bk_file, record)
-				// bk_file.WriteString(joinRecord(record))
 			} else {
 				bk_line := true
 
 				for n, mod := range rec_pairs {
 					if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
 						saveRecordToFile(bk_file, mod[1])
-						// bk_file.WriteString(joinRecord(mod[1]))
 
 						var new_mods [][]Record
 						switch {
@@ -133,7 +118,6 @@ func makeEditUpdater(rec_pairs [][]Record) func(*os.File) func(Record) {
 
 				if bk_line {
 					saveRecordToFile(bk_file, record)
-					// bk_file.WriteString(joinRecord(record))
 				}
 			}
 		}
