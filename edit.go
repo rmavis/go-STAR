@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	// "fmt"
 	"os"
 	"reflect"
 	"regexp"
@@ -66,9 +67,11 @@ func makeEditor(conf Config) func([]Record) {
 		// Open temp file
 		ed_recs := parseRecordsFromTempFile(tmp_name)
 		mod_recs, new_recs := collateRecordsByIndex(records, ed_recs)
-		// fmt.Printf("Parsed records from temp file `%v`:\n%v\n%v\n", tmp_name, mod_recs, new_recs)
+		// fmt.Printf("Parsed records from temp file `%v`:\nEDITS: %v\nNEWS: %v\n", tmp_name, mod_recs, new_recs)
 
-		updateStoreFile(conf.Store, makeEditUpdater(mod_recs))
+		if len(mod_recs) > 0 {
+			updateStoreFile(conf.Store, makeEditUpdater(mod_recs))
+		}
 
 		if len(new_recs) > 0 {
 			appendRecordsToFile(conf.Store, new_recs)
@@ -201,8 +204,11 @@ func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Reco
 		new_rec, in := new_recs[index]
 
 		if in {
-			new_rec.Meta = old_rec.Meta
-			collated = append(collated, []Record{old_rec, new_rec})
+			if ((new_rec.Value != old_rec.Value) || (!reflect.DeepEqual(new_rec.Tags, old_rec.Tags))) {
+				new_rec.Meta = old_rec.Meta
+				collated = append(collated, []Record{old_rec, new_rec})
+			}
+
 			delete(new_recs, index)
 		}
 	}
