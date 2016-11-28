@@ -12,6 +12,23 @@ import (
 
 
 
+// makeRecordPrinter returns a function that will print the records
+// it receives to stdout if there are more than zero, else it will
+// print a message indicating that there are none.
+func makeRecordPrinter() func([]Record) {
+	printer := func(records []Record) {
+		if len(records) == 0 {
+			noRecordsMatch()
+		} else {
+			printRecordsToStdout(records)
+		}
+	}
+
+	return printer
+}
+
+
+
 // printRecords prints the given slice of Records to the given
 // io.Writer in the given format.
 func printRecords(out io.Writer, records []Record, format string) {

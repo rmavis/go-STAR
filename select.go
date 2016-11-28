@@ -13,19 +13,28 @@ import (
 
 
 // makeRecordSelector receives a prompt verb and a record-action
-// function and returns an action function that prints the prompts the user
-// for the .
+// function and returns an action function that prints records and
+// prompts the user for the ones they want to act on.
 func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 	selector := func(records []Record) {
-		printRecordsToStdout(records)
+		switch {
+		case len(records) == 0:
+			noRecordsMatch()
 
-		input := promptForWantedRecord(prompt_verb)
-		wanted := getWantedRecords(records, input)
+		case len(records) == 1:
+			act(records)
 
-		if len(wanted) == 0 {
-			willDoNothing(prompt_verb)
-		} else {
-			act(wanted)
+		default:
+			printRecordsToStdout(records)
+
+			input := promptForWantedRecord(prompt_verb)
+			wanted := getWantedRecords(records, input)
+
+			if len(wanted) == 0 {
+				willDoNothing(prompt_verb)
+			} else {
+				act(wanted)
+			}
 		}
 	}
 
@@ -105,4 +114,12 @@ func getIntsFromInput(input string) []int {
 // indicating to the user that no action will be taken.
 func willDoNothing(verb string) {
 	fmt.Printf("Will %v nothing.\n", verb)
+}
+
+
+
+// noRecordsMatch prints a message useful for indicating to the
+// user that no records match the search terms that were given.
+func noRecordsMatch() {
+	fmt.Printf("No records match.\n")
 }

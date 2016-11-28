@@ -43,7 +43,7 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 
 	switch {
 	case action_code[0] == 4:  // Dump all.
-		act = printRecordsToStdout
+		act = makeRecordPrinter()
 
 	case action_code[1] == 0:  // Read from config.
 		switch {
@@ -52,7 +52,7 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 		case conf.Action == "open":
 			act = makeRecordSelector("open", makeActAndUpdater(conf, pipeRecordsToOpen))
 		case conf.Action == "browse" || conf.Action == "":
-			act = printRecordsToStdout
+			act = makeRecordPrinter()
 		default:                     // Any external command can be specified.
 			piper := makeRecordPiper(conf.Action)
 			act = makeRecordSelector(conf.Action, makeActAndUpdater(conf, piper))
@@ -71,10 +71,10 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 		act = makeRecordSelector("delete", makeDeleter(conf))
 
 	case action_code[1] == 5:  // browse
-		act = printRecordsToStdout
+		act = makeRecordPrinter()
 
 	default:  // Bork.
-		act = printRecordsToStdout
+		act = makeRecordPrinter()
 	}
 
 	return act
