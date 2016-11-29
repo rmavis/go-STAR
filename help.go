@@ -11,8 +11,22 @@ import (
 func printUsageInformation() {
 	msg := `USAGE
 
+  INITIALIZING
+    $ star -i [path/to/store/file]
+
+    This command will ensure that your config and store files exist.
+    The config file will be '~/.config/star/config.yaml'. And if you
+    provide a path for the store file, that will be used. If not, the
+    default is '~/.config/star/store'.
+
+
   CREATING
-     $ star -n value tag[, tag...]
+    $ star -n value tag[, tag...]
+
+    This command will create a new entry in the store file. An entry
+    consists of a value, any number of tags, and metadata (timestamps
+    for the dates the value was created and last accessed and a count
+    of the number of times the entry has been accessed).
 
 
   SEARCHING & ACTING
