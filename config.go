@@ -98,6 +98,17 @@ func checkConfig(conf *Config) {
 
 
 
+// mergeConfigWithDefaults checks each part of the given Config and
+// fills in blanks with defaults.
+func mergeConfigWithDefaults(conf *Config) {
+	conf.Action = checkAction(conf.Action)
+	conf.Editor = checkEditor(conf.Editor)
+	conf.FilterMode = checkFilterMode(conf.FilterMode)
+	conf.Store = checkStoreFile(conf.Store)
+}
+
+
+
 // checkAction checks if the given action is valid. If so, the string
 // is just returned. If not, the default action is returned.
 func checkAction(_act string) string {
@@ -111,14 +122,26 @@ func checkAction(_act string) string {
 
 
 
+// checkConfigFile ensures that the user's config file exists.
+func checkConfigFile() {
+	if config_path := configFilePath(); !doesFileExist(config_path) {
+		createFile(config_path)
+	}
+}
+
+
+
 // checkStoreFile ensures that the user's store file exists. It
 // returns the given file name's absolute path.
 func checkStoreFile(_path string) string {
 	var abs_path string
 
-	if strings.Contains(_path, "~") {
+	switch {
+	case _path == "":
+		abs_path = defaultStoreFilePath()
+	case strings.Contains(_path, "~"):
 		abs_path = path.Clean(strings.Replace(_path, "~", userHome(), -1))
-	} else {
+	default:
 		abs_path = path.Clean(_path)
 	}
 
@@ -176,5 +199,29 @@ func getEnv(env_var string, _default string) string {
 		return _default
 	} else {
 		return ed
+	}
+}
+
+
+
+// saveConfigToFile writes the given Config to the user's config
+// file in the expected YAML format.
+func saveConfigToFile(conf *Config) {
+	file_name := configFilePath()
+
+	file_handle, err := os.Create(file_name)
+	checkForError(err)
+	defer file_handle.Close()
+
+	conf_pairs := [][]string{
+		{"file_name", conf.Store},
+		{"filter_mode", conf.FilterMode},
+		{"pipe_to", conf.Action},
+		{"editor", conf.Editor}}
+
+	for _, pair := range conf_pairs {
+		conf_line := []string{pair[0], ": ", pair[1], "\n"}
+		_, err := file_handle.WriteString(strings.Join(conf_line, ""))
+		checkForError(err)
 	}
 }

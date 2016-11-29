@@ -33,7 +33,7 @@ func main() {
 			action = func() {fmt.Printf("Would make `dump` action.")}  // #TODO
 		}
 	case action_code[0] == 5:  // initialize
-		action = func() {fmt.Printf("Would make `init` action.")}  // #TODO
+		action = makeInitializer(terms)
 	// case action_code[0] == 6:  // demo
 	// 	action = func() {fmt.Printf("Would make `demo` action.")}  // #TODO
 	default:
