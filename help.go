@@ -21,7 +21,7 @@ func printUsageInformation() {
 
 
   CREATING
-    $ star -n value tag[, tag...]
+    $ star -n value[ tag...]
 
     This command will create a new entry in the store file. An entry
     consists of a value, any number of tags, and metadata (timestamps
@@ -30,7 +30,7 @@ func printUsageInformation() {
 
 
   SEARCHING & ACTING
-    $ star [flags] term[, term...]
+    $ star [flags] term[ term...]
 
     FLAGS
       -b, --browse  Browse (do not pipe value to external tool).

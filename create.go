@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -14,8 +15,12 @@ import (
 // the user's config and the terms given on the command line.
 func makeCreateAction(conf Config, terms []string) func() {
 	action := func() {
-		record := makeRecordFromInput(terms)
-		appendRecordsToFile(conf.Store, []Record{record})
+		if len(terms) == 0 {
+			printTermCreationError()
+		} else {
+			record := makeRecordFromInput(terms)
+			appendRecordsToFile(conf.Store, []Record{record})
+		}
 	}
 
 	return action
@@ -47,4 +52,10 @@ func appendRecordsToFile(file_name string, records []Record) {
 	for _, record := range records {
 		saveRecordToFile(file, record)
 	}
+}
+
+
+
+func printTermCreationError() {
+	fmt.Println("A new entry needs a value and any number of tags. Example:\n  $ star -n value tag1 tag2 tag3")
 }
