@@ -91,7 +91,7 @@ func defaultConfig() Config {
 
 // checkConfig checks the required parts of the user's Config.
 func checkConfig(conf *Config) {
-	// conf.Action = checkAction(conf.Action)
+	conf.Action = checkAction(conf.Action)
 	conf.Store = checkStoreFile(conf.Store)
 	conf.FilterMode = checkFilterMode(conf.FilterMode)
 }
@@ -112,6 +112,10 @@ func mergeConfigWithDefaults(conf *Config) {
 // checkAction checks if the given action is valid. If so, the string
 // is just returned. If not, the default action is returned.
 func checkAction(_act string) string {
+	if strings.Contains(_act, "~") {
+		_act = path.Clean(strings.Replace(_act, "~", userHome(), -1))
+	}
+
 	// Note that `pbcopy` is the default action.
 	if _act == "" {
 		return PbcopyPath

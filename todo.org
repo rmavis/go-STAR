@@ -20,24 +20,25 @@
 
 * Bugs [1/4]
   - [X] When writing to backup file, only wanted records are part of `records`!!!!!
-  - [ ] Error when changing permissions of backup file
   - [ ] When piping multiple values to `pbcopy` only the last one
   - [ ] When command in config.yaml has space (eg `ls -la`) the command will fail
     Because "ls -la" is not a command.
     Need to split on spaces, use the first as command, rest as args.
+  - [ ] Error when changing permissions of backup file
 
 
 
-* New features [2/3]
+* New features [3/3]
   - [X] Browse! Sheesh.
   - [X] Allow user to type "all" at prompt to act on all matches
-  - [ ] Allow user to pipe to arbitrary tools
-    Via command line option or config.yaml
+  - [X] Allow user to pipe to arbitrary tools
+    Via config.yaml
 
 
 
-* Would be nice / optimizations [1/3]
+* Would be nice / optimizations [1/4]
   - [ ] Pass pointers to `conf` instead of copies
+  - [ ] Allow user to pipe to arbitrary tools via command line option?
   - [ ] Error messages from shell commands?
     Currently "Error running `/usr/bin/open wicked game`: exit status 1" instead of "The file /Users/richardmavis/Code/go/src/gitlab.com/u/rmavis/gostar/wicked does not exist."
   - [X] Better message in prompt
