@@ -41,7 +41,9 @@ I use `star` for all sorts of things.
     5) (*￣з￣)
        emoticon, kissing
 
-    $ star unix tar  # Never [let your friends down][xkcd-tar] again!
+Never [let your friends down][xkcd-tar] again!
+
+    $ star unix tar
     1) tar -czvf DIR
        unix, tar, zip
     2) tar -tzvf DIR.tar.gz
@@ -99,6 +101,7 @@ Or you can clone the repo and build it yourself. If you have a working Go setup,
 
     $ cd $GOPATH/src/where/ever
     $ git clone https://github.com/rmavis/go-STAR.git
+    $ go get gopkg.in/yaml.v2  # This is star's only dependency.
     $ go install
 
 There's also [a version written in Ruby][star-ruby], if you're into that. They're similar but I recommend this one---it's faster and has better browsing options.
