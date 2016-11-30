@@ -46,7 +46,7 @@ const EditFileInstructions = `# STAR will read this file and update its store wi
 // that temp file, and incorporating the changes into the updated
 // store file. Through this process records can be updated and added
 // but not deleted.
-func makeEditor(conf Config) func([]Record) {
+func makeEditor(conf *Config) func([]Record) {
 	ed := func(records []Record) {
 		// Make tmp file
 		tmp_name := getTempFileName("edit")

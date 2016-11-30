@@ -15,7 +15,7 @@ import (
 // makeActAndUpdater returns a procedure for use in the Search action
 // function in which the wanted Records will be updated and those
 // updates will be written to the store file.
-func makeActAndUpdater(conf Config, act func([]Record)) func([]Record) {
+func makeActAndUpdater(conf *Config, act func([]Record)) func([]Record) {
 	updater := func(records []Record) {
 		updateWantedRecords(records)
 		updateStoreFile(conf.Store, makeBackupUpdater(records, saveRecordToFile))

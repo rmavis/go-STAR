@@ -17,8 +17,8 @@ import (
 func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 	// fmt.Printf("Action code: %v\n", action_code)
 
-	match_act := getMatchAction(conf, action_code)
-	match_lim := getMatchLim(conf, action_code, terms)
+	match_act := getMatchAction(&conf, action_code)
+	match_lim := getMatchLim(&conf, action_code, terms)
 	matcher := makeMatcher(terms, match_lim)
 	sorter := makeSorter(action_code)
 
@@ -38,7 +38,7 @@ func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 // records as specified in the multi-part search action function. The
 // user's config and the action code are required to create the
 // context/scope for the final action.
-func getMatchAction(conf Config, action_code []int) func([]Record) {
+func getMatchAction(conf *Config, action_code []int) func([]Record) {
 	var act func([]Record)
 
 	switch {
@@ -86,7 +86,7 @@ func getMatchAction(conf Config, action_code []int) func([]Record) {
 // matches that must occur between the given terms and the scanned
 // Records for a Record to "match" the terms. This value can depend
 // on the user's config, the action code, and the number of terms.
-func getMatchLim(conf Config, action_code []int, terms []string) int {
+func getMatchLim(conf *Config, action_code []int, terms []string) int {
 	var lim int
 
 	switch {
