@@ -1,8 +1,8 @@
-* Todo [1/4]
+* Todo [2/4]
   Always: grep -i "todo" *.go
   - [X] When one record matches, act immediately?
     Except delete.
-  - [ ] Display message confirming auto-action?
+  - [X] Display message confirming auto-action?
   - [ ] Refactor / reorganize / clean code
   - [ ] Improved documentation
 

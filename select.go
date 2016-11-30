@@ -22,6 +22,7 @@ func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 			noRecordsMatch()
 
 		case len(records) == 1:
+			willActOnRecord(prompt_verb, records[0].Value)
 			act(records)
 
 		default:
@@ -122,4 +123,12 @@ func willDoNothing(verb string) {
 // user that no records match the search terms that were given.
 func noRecordsMatch() {
 	fmt.Printf("No records match.\n")
+}
+
+
+
+// willActOnRecord prints a message stating that the given verb will
+// happen to the given value.
+func willActOnRecord(verb string, value string) {
+	fmt.Printf("Will %v \"%v\".\n", verb, value)
 }
