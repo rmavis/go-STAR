@@ -1,4 +1,4 @@
-* Todo [7/10]
+* Todo [8/10]
   Always: grep -i "todo" *.go
   - [X] Create records
   - [X] Delete records
@@ -14,7 +14,7 @@
     Except delete.
   - [ ] Refactor / reorganize / clean code
   - [ ] Improved documentation
-  - [ ] New readme
+  - [X] New readme
 
 
 
@@ -36,7 +36,7 @@
 
 
 
-* Would be nice / optimizations [1/4]
+* Improvements / optimizations [1/4]
   - [ ] Pass pointers to `conf` instead of copies
   - [ ] Allow user to pipe to arbitrary tools via command line option?
   - [ ] Error messages from shell commands?
