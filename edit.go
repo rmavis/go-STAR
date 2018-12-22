@@ -55,7 +55,7 @@ func makeEditor(conf *Config) func([]Record) {
 
 		// Print instructions, records to tmp file
 		tmp_file.WriteString(EditFileInstructions)
-		printRecordsToTempFile(records, tmp_file)
+		listRecordsToTempFile(records, tmp_file)
 		tmp_file.Close()
 
 		// Open tmp file in editor

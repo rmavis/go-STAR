@@ -43,7 +43,14 @@ func getMatchAction(conf *Config, action_code []int) func([]Record) {
 
 	switch {
 	case action_code[0] == 4:  // Dump all.
-		act = makeRecordPrinter()
+		switch {
+		case action_code[1] == 1:  // dump values
+			act = makeRecordPrintCaller(dumpRecordValuesToStdout)
+		case action_code[1] == 2:  // dump tags
+			act = makeRecordPrintCaller(dumpRecordValuesToStdout)
+		default:  // bork
+			act = makeRecordPrintCaller(listRecordsToStdout)
+		}
 
 	case action_code[1] == 0:  // Read from config.
 		switch {
@@ -52,7 +59,7 @@ func getMatchAction(conf *Config, action_code []int) func([]Record) {
 		case conf.Action == "open":
 			act = makeRecordSelector("open", makeActAndUpdater(conf, pipeRecordsToOpen))
 		case conf.Action == "browse" || conf.Action == "":
-			act = makeRecordPrinter()
+			act = makeRecordPrintCaller(listRecordsToStdout)
 		default:                     // Any external command can be specified.
 			piper := makeRecordPiper(conf.Action)
 			act = makeRecordSelector(conf.Action, makeActAndUpdater(conf, piper))
@@ -71,10 +78,10 @@ func getMatchAction(conf *Config, action_code []int) func([]Record) {
 		act = makeRecordSelector("delete", makeDeleter(conf))
 
 	case action_code[1] == 5:  // browse
-		act = makeRecordPrinter()
+		act = makeRecordPrintCaller(listRecordsToStdout)
 
 	default:  // Bork.
-		act = makeRecordPrinter()
+		act = makeRecordPrintCaller(listRecordsToStdout)
 	}
 
 	return act
@@ -90,11 +97,15 @@ func getMatchLim(conf *Config, action_code []int, terms []string) int {
 	var lim int
 
 	switch {
-	case action_code[0] == 4:  // All.
-		lim = 0
+	// case action_code[0] == 4:  // All.
+	// 	lim = 0
 	case action_code[2] == 0:  // Read from config.
 		if conf.FilterMode == "loose" {
-			lim = 1
+			if (len(terms) == 0) {
+				lim = 0
+			} else {
+				lim = 1
+			}
 		} else {
 			lim = len(terms)
 		}

@@ -26,7 +26,7 @@ func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 			act(records)
 
 		default:
-			printRecordsToStdout(records)
+			listRecordsToStdout(records)
 
 			input := promptForWantedRecord(prompt_verb)
 			wanted := getWantedRecords(records, input)

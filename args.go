@@ -226,6 +226,8 @@ func getActFromWord(arg string) []int {
 		act = []int{1, 0, 2}
 	case arg == "tags":
 		act = []int{4, 2, 0}
+	case arg == "vals":
+		act = []int{4, 1, 0}
 	default:
 		act = []int{0, 0, 0}
 	}

@@ -9,24 +9,20 @@ import (
 )
 
 
-
-
-
-// makeRecordPrinter returns a function that will print the records
-// it receives to stdout if there are more than zero, else it will
-// print a message indicating that there are none.
-func makeRecordPrinter() func([]Record) {
-	printer := func(records []Record) {
+// makeRecordPrintCaller returns a function that will print the
+// records it receives to stdout if there are more than zero, else
+// it will print a message indicating that there are none.
+func makeRecordPrintCaller(printer func([]Record)) func([]Record) {
+	caller := func(records []Record) {
 		if len(records) == 0 {
 			noRecordsMatch()
 		} else {
-			printRecordsToStdout(records)
+			printer(records)
 		}
 	}
 
-	return printer
+	return caller
 }
-
 
 
 // printRecords prints the given slice of Records to the given
@@ -53,17 +49,24 @@ func printRecords(out io.Writer, records []Record, format string) {
 }
 
 
-
-// printRecordsToStdout is a convenience function for printing the
+// listRecordsToStdout is a convenience function for printing the
 // given records to stdout.
-func printRecordsToStdout(records []Record) {
+func listRecordsToStdout(records []Record) {
 	printRecords(os.Stdout, records, "%v%v) %v\n%v%v\n")
 }
 
 
-
-// printRecordsToTempFile is a convenience function for printing the
+// listRecordsToTempFile is a convenience function for printing the
 // given records to the given file handle.
-func printRecordsToTempFile(records []Record, file *os.File) {
+func listRecordsToTempFile(records []Record, file *os.File) {
 	printRecords(file, records, "%v%v) %v\n%vTags: %v\n\n")
+}
+
+
+// dumpRecordValuesToStdout receives a slice of Records and writes
+// the value of each to stdout.
+func dumpRecordValuesToStdout(records []Record) {
+	for o := 0; o < len(records); o++ {
+		fmt.Fprintf(os.Stdout, "%v\n", records[o].Value)
+	}
 }
