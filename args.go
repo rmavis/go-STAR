@@ -177,6 +177,8 @@ func getActFromChar(arg string) []int {
 		act = []int{1, 0, 2}
 	case arg == "t":  // dump tags
 		act = []int{4, 2, 0}
+	case arg == "v":  // dump values
+		act = []int{4, 1, 0}
 	case arg == "x":  // help, customization
 		act = []int{3, 3, 0}
 	default:

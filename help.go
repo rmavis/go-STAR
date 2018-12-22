@@ -40,6 +40,7 @@ func printUsageInformation() {
       -l, --loose   Match loosely.
       -o, --open    Pipe the value of the specified entries to 'open'.
       -s, --strict  Match strictly.
+      -v, --vals    Print values only (no selection step).
 
     Searching is the default action. If no flags are given, the match
     mode (strict or loose) and action to take (external tool to pipe
