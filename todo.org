@@ -1,11 +1,8 @@
-* Todo [2/4]
-  Always: grep -i "todo" *.go
-  - [X] When one record matches, act immediately?
-    Except delete.
-  - [X] Display message confirming auto-action?
-  - [ ] Refactor / reorganize / clean code
-  - [ ] Improved documentation
-
+* Todo [0/2]
+  - [ ] Would be nice to (optionally) include tags in `--vals` listing
+    Maybe length of value displayed as well?
+  - [ ] Would be nice to be able to sort by date
+    This is implicit in `-b` (sort by newest first), but being explicit would be better.
 
 
 * Bugs [0/3]
@@ -14,15 +11,6 @@
     Because "ls -la" is not a command.
     Need to split on spaces, use the first as command, rest as args.
   - [ ] Error when changing permissions of backup file
-
-
-
-* New features [3/3]
-  - [X] Browse! Sheesh.
-  - [X] Allow user to type "all" at prompt to act on all matches
-  - [X] Allow user to pipe to arbitrary tools
-    Via config.yaml
-
 
 
 * Improvements / optimizations [1/4]
