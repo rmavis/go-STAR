@@ -5,45 +5,40 @@ The functions in `args.go` will read the user's input, interpret it, and build a
 This file exists to centralize the documentation and correlations between arguments (flags) and action codes (the slice of integers).
 
 
-
 ## Arguments (flags)
 
-  -a, --all        Show all entries.
-  -b, --browse     Show matching entries, take no action.
-  -c, --copy       pbcopy the value rather than open it.
-  -f, --flags,
-    -h, --help,
-    --commands     Show this message.
-  -d, --delete     Delete an entry.
-  -e, --edit       Edit an entry.
-  -i, --init       Create the ~/.config/star/store file.
-  -l, --loose      Match loosely, rather than strictly.
-  -m, --demo       Run the demo.
-  -n, --new        Add a new entry.
-  -o, --open       open the value rather than pbcopy it.
-  -r, --readme,    Show the readme message.
-  -s, --strict     Match strictly rather than loosely.
-  -t, --tags       Show all tags.
-  -x, --examples   Show some examples.
-  -xh, -hx,        Show this message with extra details.
-  -xr, -rx,        Show the readme message with extra details.
-
+  -1, --one-line  Print compressed, one-line output.
+  -2, --two-line  Print full, two-line output.
+  -a, --asc       Sort records from low to high.
+  -b, --browse    Show matching entries, take no action.
+  -d, --desc      Sort records from high to low.
+  -e, --edit      Edit an entry.
+  -h, --help      Show this message.
+  -i, --init      Create the ~/.config/star/store file.
+  -l, --loose     Match loosely, rather than strictly.
+  -m, --demo      Run the demo.
+  -n, --new       Add a new entry.
+  -p, --pipe      Pipe the selected record to an action.
+  -s, --strict    Match strictly rather than loosely.
+  -t, --tags      Show all tags.
+  -v, --vals      Show all values.
+  -x, --delete    Delete an entry.
 
 
 ## Action Codes
 
-An action code is a slice of three integers that encodes the user's intended action.
+An action code is a slice of integers that encodes the user's intended action.
 
 The first int indicates the command/operation:
-1: search
+1: select
 2: create
 3: help
-4: dump
+4: view
 5: initialize
 6: demo
 
 If the first int is a verb, the second int is an adverb. Only some verbs can be modified:
-1 (search):
+1 (select):
   0: default (read from config)
   1: pbcopy
   2: open
@@ -55,18 +50,25 @@ If the first int is a verb, the second int is an adverb. Only some verbs can be 
   2: readme
   3: customization
   4: examples
-4 (dump):
+4 (view):
   1: values
   2: tags
 
 And if the second int is an adverb, the third is an adjective:
-1 (search):
+1, 4 (select, browse):
   0: default (read from config)
   1: loose
   2: strict
 
-A 0 in any place means that no relevant argument was given and that a sensible default should be used, if applicable.
+The fourth indicates formatting.
+  0: full list (two lines per record: value, then tags)
+  1: compressed (one line per record)
 
+The fifth indicates sort order.
+  0: highest to lowest
+  1: lowest to highest
+
+A 0 in any place means that no relevant argument was given and that a sensible default should be used, if applicable.
 
 
 ## Argument Types
@@ -92,7 +94,7 @@ A 0 in any place means that no relevant argument was given and that a sensible d
   xr (extra readme)
   x (examples)
 
-- Dynamic messages (dumps?)
+- Dynamic messages (view?)
   a (all)
   t (tags)
 
@@ -102,7 +104,6 @@ A 0 in any place means that no relevant argument was given and that a sensible d
 
 - Compound
   m (demo)
-
 
 
 ## Usage Forms
@@ -120,8 +121,8 @@ A 0 in any place means that no relevant argument was given and that a sensible d
 
 - See data dumps on existing entries
   star -[at]
-  Operation (Verb): dump.
-  Dump material: determined by [at].
+  Operation (Verb): view.
+  View material: determined by [at].
 
 - Create a new entry
   star -n tag(s) value

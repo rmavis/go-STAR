@@ -5,9 +5,6 @@ import (
 )
 
 
-
-
-
 type ByMatchRate []Record
 
 func (a ByMatchRate) Len() int {
@@ -42,26 +39,31 @@ func (a ByDateCreated) Less(i, j int) bool {
 }
 
 
-
-
-
 // makeSorter returns the sorting function used in the multi-part
-// Search action function.
-func makeSorter(action_code []int) func([]Record) {
+// Search action function. If search terms are given, then the sort
+// sort will be by relevancy. Else, by date.
+func makeSorter(action_code []int, has_terms bool) func([]Record) {
 	var sorter func([]Record)
 
-	switch {
-	case action_code[0] == 4:  // Dump in the order created.
-		sorter = func(records []Record) {
-			sort.Sort(ByDateCreated(records))
+	if (has_terms) {
+		if (action_code[3] == 2) {  // ascending
+			sorter = func(records []Record) {
+				sort.Sort(ByDateCreated(records))
+			}
+		} else {  // descending
+			sorter = func(records []Record) {
+				sort.Sort(sort.Reverse(ByDateCreated(records)))
+			}
 		}
-	case action_code[1] == 5:  // Browse recent-to-old.
-		sorter = func(records []Record) {
-			sort.Sort(sort.Reverse(ByDateCreated(records)))
-		}
-	default:
-		sorter = func(records []Record) {
-			sort.Sort(sort.Reverse(ByMatchRate(records)))
+	} else {
+		if (action_code[3] == 2) {  // ascending
+			sorter = func(records []Record) {
+				sort.Sort(ByMatchRate(records))
+			}
+		} else {  // descending
+			sorter = func(records []Record) {
+				sort.Sort(sort.Reverse(ByMatchRate(records)))
+			}
 		}
 	}
 

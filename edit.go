@@ -59,7 +59,7 @@ func makeEditor(conf *Config) func([]Record) {
 		tmp_file.Close()
 
 		// Open tmp file in editor
-		ed := checkEditor(conf.Editor)
+		ed := checkEditor(conf.Editor, getEnv("EDITOR", DefaultEditorPath))
 		pipeToToolAsArg(tmp_name, ed)
 
 		// Wait for editor to close

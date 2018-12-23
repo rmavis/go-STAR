@@ -9,13 +9,11 @@ import (
 )
 
 
-
-
-
-// makeRecordSelector receives a prompt verb and a record-action
-// function and returns an action function that prints records and
-// prompts the user for the ones they want to act on.
-func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
+// makeRecordSelector receives a prompt verb, a record-printing
+// function, and a record-action function and returns an action
+// function that prints records and prompts the user for the ones
+// they want to act on.
+func makeRecordSelector(prompt_verb string, print func([]Record), act func([]Record)) func([]Record) {
 	selector := func(records []Record) {
 		switch {
 		case len(records) == 0:
@@ -26,7 +24,7 @@ func makeRecordSelector(prompt_verb string, act func([]Record)) func([]Record) {
 			act(records)
 
 		default:
-			listRecordsToStdout(records)
+			print(records)
 
 			input := promptForWantedRecord(prompt_verb)
 			wanted := getWantedRecords(records, input)

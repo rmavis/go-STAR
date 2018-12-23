@@ -12,7 +12,7 @@ func makeInitializer(terms []string) func() {
 	init := func() {
 		checkConfigFile()
 		conf := readConfig()
-		conf.Store = checkStoreFile(terms[0])
+		conf.Store = checkStoreFile(terms[0], defaultStoreFilePath())
 		mergeConfigWithDefaults(&conf)
 		saveConfigToFile(&conf)
 	}
