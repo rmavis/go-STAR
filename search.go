@@ -50,7 +50,7 @@ func getMatchAction(conf *Config, action_code []int) func([]Record) {
 	case action_code[1] == 1:  // View, no select.
 		act = makeRecordPrintCaller(printer)
 	case action_code[1] == 2:  // Select and pipe.
-		piper := makeRecordPiper(conf.Action, pipeToToolAsStdin)
+		piper := makeRecordPiper(conf.Action, pipeRecordsAsStdin)
 		act = makeRecordSelector("pipe", printer, makeActAndUpdater(conf, piper))
 	case action_code[1] == 3:  // edit
 		act = makeRecordSelector("edit", printer, makeEditor(conf))

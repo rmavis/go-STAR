@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	// "io/ioutil"
-	// "os"
+	"os"
 	"os/exec"
 	//"strings"
 	"unicode/utf8"
@@ -15,19 +15,33 @@ import (
 // makeRecordPiper makes the Pipe search action function: the
 // returned function will receive the slice of wanted Records and
 // pipe the values of each to an external tool.
-func makeRecordPiper(act string, caller func(string, string)) func([]Record) {
+func makeRecordPiper(act string, caller func([]Record, string)) func([]Record) {
 	piper := func(records []Record) {
-		pipeRecordsToExternalTool(records, act, caller)
+		caller(records, act)
 	}
 	return piper
 }
 
-// pipeRecordsToExternalTool pipes each of the given Records as an
-// argument to the tool named by the given path.
-func pipeRecordsToExternalTool(records []Record, tool string, caller func(string, string)) {
-	for _, r := range records {
-		caller(r.Value, tool)
+// pipeRecordsAsStdin pipes the given Records to the tool named by the
+// given path on stdin.
+func pipeRecordsAsStdin(records []Record, tool string) {
+	cmd := exec.Command(tool)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		panic("Failed to open stdin pipe for records!")
 	}
+
+	defer func() {
+		for _, record := range records {
+			io.WriteString(stdin, record.Value + "\n")
+		}
+		stdin.Close() // Close the pipe, thereby sending EOF.
+		if err := cmd.Run(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 }
 
 // pipeToToolAsArg pipes the given string to the tool named by the
@@ -38,33 +52,6 @@ func pipeToToolAsArg(str string, tool string) {
 		fmt.Printf("Error running `%v %v`: %v\n", tool, str, err)
 	}
 	runCommand(cmd, printErr)
-}
-
-// pipeToToolAsStdin pipes the given string to the tool named by the
-// given path as stdin, so in the form `str | tool`.
-func pipeToToolAsStdin(str string, tool string) {
-	fmt.Printf("WOULD PIPE `%v` AS STDIN TO `%v`", str, tool)
-
-	// cmd := exec.Command(tool)
-	// cmd.Stdin = strings.NewReader(str)
-	// cmd_err := func(err error) {
-	// 	fmt.Printf("Error running `%v | %v`: %v\n", str, tool, err)
-	// }
-	// runCommand(cmd, cmd_err)
-
-
-    cmd := exec.Command(tool)
-    stdin, err := cmd.StdinPipe()
-    if err != nil {
-		fmt.Printf("Error (1) : %v\n", err)
-    }
-	defer stdin.Close()
-    _, err = io.WriteString(stdin, str + "\n")
-    if err != nil {
-		fmt.Printf("Error (3) : %v\n", err)
-    }
-	cmd.Run()
-
 }
 
 // runCommand runs the given Command and checks for an error. If an
