@@ -51,7 +51,7 @@ Never [let your friends down][xkcd-tar] again!
     3) tar -xzvf DIR.tar.gz
        unix, tar, unzip
 
-That's the "Retrieving" part of `star`. Depending on your config (or command line flags) you can then pipe the string on the numbered line to `pbcopy`, `open`, or any other external tool you like.
+That's the "Retrieving" part of `star`. Depending on your config (or command line flags) you can then pipe the string on the numbered line(s) to a script and do whatever you'd like with it.
 
 The "Archiving" part is done like this:
 
@@ -76,7 +76,7 @@ You can edit records via a temp file in your `$EDITOR`:
 
 Deleting records is also easy:
 
-    $ star -d todo
+    $ star -x todo
     1) shave
        todo, today
     2) shower
@@ -86,7 +86,6 @@ Deleting records is also easy:
     Delete these records: all
 
 So essentially `star` saves, interfaces with, and acts on text snippets that it stores in a plain text file.
-
 
 
 ## Installation
@@ -104,9 +103,7 @@ Or you can clone the repo and build it yourself. If you have a working Go setup,
     $ go get gopkg.in/yaml.v2  # This is star's only dependency.
     $ go install
 
-There's also [a version written in Ruby][star-ruby], if you're into that. They're similar but I recommend this one---it's faster and has better browsing options.
-
-
+There's also [a version written in Ruby][star-ruby], if you're into that. They're similar but I recommend this one---it's faster and has better viewing/output options.
 
 
 
