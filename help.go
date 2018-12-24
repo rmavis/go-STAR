@@ -33,35 +33,41 @@ func printUsageInformation() {
     $ star [flags] term[ term...]
 
     FLAGS
-      -b, --browse  Browse (do not pipe value to external tool).
-      -c, --copy    Pipe the value of the specified entries to 'pbcopy'.
-      -d, --delete  Delete the specified entries.
-      -e, --edit    Edit the specified entries in your $EDITOR.
-      -l, --loose   Match loosely.
-      -o, --open    Pipe the value of the specified entries to 'open'.
-      -s, --strict  Match strictly.
-      -v, --vals    Print values only (no selection step).
+      -1, --one-line  Print output compressed to one line.
+      -2, --two-line  Print output on two lines (value, tags).
+      -a, --asc       Print records in ascending order.
+      -b, --browse    Browse (do not select and pipe value to external tool).
+      -d, --desc      Print output in descending order.
+      -e, --edit      Edit the specified entries in your $EDITOR.
+      -h, ---help     Print this help message.
+      -i, --init      Initialize.
+      -l, --loose     Match loosely.
+      -n, --new       Create an entry.
+      -p, --pipe      Pipe the value of the selected record to external tool.
+      -s, --strict    Match strictly.
+      -x, --delete    Delete the selected record(s).
 
     Searching is the default action. If no flags are given, the match
     mode (strict or loose) and action to take (external tool to pipe
     the value to) will be read from '~/.config/star/config.yaml'.
     Keys read from the config file are:
-      file_name: ~/path/to/store/file
+      store_file: ~/path/to/store/file
       filter_mode: (strict|loose)
-      pipe_to: (copy|open|browse|/path/to/tool)
       editor: /path/to/editor
+      print_lines: (1|2)
+      sort_order: (asc|desc)
+      pipe_to: /path/to/tool
 
     If values are missing, these defaults will be used:
-      file_name: ~/.config/star/store
+      store_file: ~/.config/star/store
       filter_mode: loose
-      pipe_to: /usr/bin/pbcopy
       editor: $EDITOR or /usr/bin/vi
+      print_lines: 2
+      sort_order: desc
+      pipe_to: {none}
 
-    The only exception to the search command pattern is for the
-    browse action. If no search terms are given, then every entry
-    will be printed. It's usually best to pipe the output from the
-    browse action to your $PAGER, e.g.:
-      $ star -b what ever | less
+    If no "pipe_to" action is present, then records will be printed
+    to stdout.
 `
 
 	fmt.Println(msg)
