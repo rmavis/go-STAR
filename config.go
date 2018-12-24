@@ -167,42 +167,42 @@ func userHome() string {
 	return usr.HomeDir
 }
 
-// mergeConfigActions receives a Config and an action code and
-// returns an action code. The returned action code will be a copy
+// mergeConfigActions receives a Config and an ActionCode and
+// returns an ActionCode. The returned ActionCode will be a copy
 // of the given code but with the intent of the Config merged in.
 // Merging can only occur where the given code has 0s.
-func mergeConfigActions(conf *Config, action_code []int) []int {
-	act := action_code
+func mergeConfigActions(conf *Config, code ActionCode) ActionCode {
+	act := code
 
-	if act[1] == 0 {
+	if act.Sub == SubActConfig {
 		if len(conf.Action) > 0 {
-			act[1] = 2
+			act.Sub = SubActPipe
 		} else {
-			act[1] = 1
+			act.Sub = SubActView
 		}
 	}
 
-	if act[2] == 0 {
+	if act.Match == MatchConfig {
 		if conf.FilterMode == "strict" {
-			act[2] = 2
+			act.Match = MatchStrict
 		} else {
-			act[2] = 1
+			act.Match = MatchLoose
 		}
 	}
 
-	if act[3] == 0 {
+	if act.Sort == SortConfig {
 		if conf.SortOrder == "asc" {
-			act[3] = 2
+			act.Sort = SortAsc
 		} else {
-			act[3] = 1
+			act.Sort = SortDesc
 		}
 	}
 
-	if act[4] == 0 {
+	if act.Print == PrintConfig {
 		if conf.PrintLines == "2" {
-			act[4] = 2
+			act.Print = PrintFull
 		} else {
-			act[4] = 1
+			act.Print = PrintCompact
 		}
 	}
 

@@ -5,9 +5,6 @@ import (
 )
 
 
-
-
-
 // checkForError is a convenience function to cope with Go's idiom
 // of returning an error message if a function call fails. So rather
 // than doing this all the time:
@@ -24,8 +21,8 @@ func checkForError(e error) {
 	}
 }
 
-
-
-func printInternalActionCodeError(action_code []int) {
+// printInternalActionCodeError receives an ActionCode and prints
+// an error message.
+func printInternalActionCodeError(action_code ActionCode) {
 	fmt.Printf("There's a problem with the action code (%v).\n", action_code)
 }

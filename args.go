@@ -7,13 +7,6 @@ import (
 )
 
 
-// actionCodeDefaultView returns the action code for the basic
-// search functionality. This is necessary because Go doesn't allow
-// slices to be constants.
-func actionCodeDefaultView() []int {
-	return []int{1, 0, 0, 0, 0}
-}
-
 // parseArgs takes a slice of strings, being the command line args,
 // and returns a slice of ints that, together, encode the user's
 // intent, and a slice of strings that, if present, will affect the
@@ -24,8 +17,8 @@ func actionCodeDefaultView() []int {
 // 3 = match mode (loose, strict)
 // 4 = sort order (high to low, low to high)
 // 5 = output format (compressed, full)
-func parseArgs(args []string) ([]int, []string) {
-	act := actionCodeDefaultView()
+func parseArgs(args []string) (ActionCode, []string) {
+	act := []int{1, 0, 0, 0, 0}
 	var strs []string
 
 out:
@@ -52,7 +45,7 @@ out:
 		}
 	}
 
-	return act, strs
+	return ActionCode{act[0], act[1], act[2], act[3], act[4]}, strs
 }
 
 // getActFromChar receives a string, being a short-form command-line
@@ -64,37 +57,37 @@ func getActFromChar(arg string) []int {
 
 	switch {
 	case arg == "1":  // print compressed otuput
-		act = []int{0, 0, 0, 0, 1}
+		act = []int{0, 0, 0, 0, PrintCompact}
 	case arg == "2":  // print full otuput
-		act = []int{0, 0, 0, 0, 2}
+		act = []int{0, 0, 0, 0, PrintFull}
 	case arg == "a":  // ascending order
-		act = []int{0, 0, 0, 2, 0}
+		act = []int{0, 0, 0, SortAsc, 0}
 	case arg == "b":  // browse (print only, no select)
-		act = []int{1, 1, 0, 0, 0}
+		act = []int{MainActView, SubActView, 0, 0, 0}
 	case arg == "d":  // descending order
-		act = []int{0, 0, 0, 1, 0}
+		act = []int{0, 0, 0, SortDesc, 0}
 	case arg == "e":  // select, edit
-		act = []int{1, 3, 0, 0, 0}
+		act = []int{MainActView, SubActEdit, 0, 0, 0}
 	case arg == "h":  // help
-		act = []int{3, 0, 0, 0, 0}
+		act = []int{MainActHelp, 0, 0, 0, 0}
 	case arg == "i":  // init
-		act = []int{5, 0, 0, 0, 0}
+		act = []int{MainActInit, 0, 0, 0, 0}
 	case arg == "l":  // match loose
-		act = []int{0, 0, 1, 0, 0}
+		act = []int{0, 0, MatchLoose, 0, 0}
 	case arg == "m":  // Demo.  #TODO
-		act = []int{6, 0, 0, 0, 0}
+		act = []int{MainActDemo, 0, 0, 0, 0}
 	case arg == "n":  // create entry
-		act = []int{2, 0, 0, 0, 0}
+		act = []int{MainActCreate, 0, 0, 0, 0}
 	case arg == "p":  // select, pipe
-		act = []int{1, 2, 0, 0, 0}
+		act = []int{MainActView, SubActPipe, 0, 0, 0}
 	case arg == "s":  // match strict
-		act = []int{0, 0, 2, 0, 0}
+		act = []int{0, 0, MatchStrict, 0, 0}
 	// case arg == "t":  // view tags
 	// 	act = []int{4, 2, 0, 0, 0}
 	// case arg == "v":  // view values
 	// 	act = []int{4, 1, 0, 0, 0}
 	case arg == "x":  // select, delete
-		act = []int{1, 4, 0, 0, 0}
+		act = []int{MainActView, SubActDelete, 0, 0, 0}
 	default:
 		fmt.Fprintf(os.Stderr, "Unrecognized option `%v`", arg)
 		act = []int{0, 0, 0, 0, 0}
@@ -112,35 +105,35 @@ func getActFromWord(arg string) []int {
 
 	switch {
 	case arg == "asc":
-		act = []int{0, 0, 0, 2, 0}
+		act = []int{0, 0, 0, SortAsc, 0}
 	case arg == "browse":
-		act = []int{1, 1, 0, 0, 0}
+		act = []int{MainActView, SubActView, 0, 0, 0}
 	case arg == "desc":
-		act = []int{0, 0, 0, 1, 0}
+		act = []int{0, 0, 0, SortDesc, 0}
 	case arg == "delete":
-		act = []int{1, 4, 0, 0, 0}
+		act = []int{MainActView, SubActDelete, 0, 0, 0}
 	case arg == "demo":  // Demo.  #TODO
-		act = []int{6, 0, 0, 0, 0}
+		act = []int{MainActDemo, 0, 0, 0, 0}
 	case arg == "edit":
-		act = []int{1, 3, 0, 0, 0}
+		act = []int{MainActView, SubActEdit, 0, 0, 0}
 	case arg == "help":
-		act = []int{3, 0, 0, 0, 0}
+		act = []int{MainActHelp, 0, 0, 0, 0}
 	case arg == "init":
-		act = []int{5, 0, 0, 0, 0}
+		act = []int{MainActInit, 0, 0, 0, 0}
 	case arg == "loose":
-		act = []int{0, 0, 1, 0, 0}
+		act = []int{0, 0, MatchLoose, 0, 0}
 	case arg == "new":
-		act = []int{2, 0, 0, 0, 0}
+		act = []int{MainActCreate, 0, 0, 0, 0}
 	case arg == "one-line":
-		act = []int{0, 0, 0, 0, 1}
+		act = []int{0, 0, 0, 0, PrintCompact}
 	case arg == "pipe":
-		act = []int{1, 2, 0, 0, 0}
+		act = []int{MainActView, SubActPipe, 0, 0, 0}
 	case arg == "strict":
-		act = []int{0, 0, 2, 0, 0}
+		act = []int{0, 0, MatchStrict, 0, 0}
 	// case arg == "tags":
 	// 	act = []int{4, 2, 0, 0, 0}
 	case arg == "two-line":
-		act = []int{0, 0, 0, 0, 2}
+		act = []int{0, 0, 0, 0, PrintFull}
 	// case arg == "vals":
 	// 	act = []int{4, 1, 0, 0, 0}
 	default:

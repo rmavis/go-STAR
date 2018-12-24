@@ -8,7 +8,7 @@ import (
 
 // main runs the show.
 func main() {
-	// This gets the action code and terms from the command line
+	// This gets the ActionCode and terms from the command line
 	// arguments, if any exist.
 	action_code, terms := parseArgs(os.Args[1:])
 
@@ -17,17 +17,15 @@ func main() {
 	var action func()
 
 	switch {
-	case action_code[0] == 1:  // view
+	case action_code.Main == MainActView:  // view
 		action = makeSearchAction(readConfig(), action_code, terms)
-	case action_code[0] == 2:  // create
+	case action_code.Main == MainActCreate:  // create
 		action = makeCreateAction(readConfig(), terms)
-	case action_code[0] == 3:  // help
+	case action_code.Main == MainActHelp:  // help
 		action = func() {printUsageInformation()}
-	// case action_code[0] == 4:  // view
-	// 	action = makeSearchAction(readConfig(), action_code, terms)
-	case action_code[0] == 5:  // initialize
+	case action_code.Main == MainActInit:  // initialize
 		action = makeInitializer(terms)
-	case action_code[0] == 6:  // demo
+	case action_code.Main == MainActDemo:  // demo
 		action = func() {fmt.Printf("Would make `demo` action.")}  // #TODO
 	default:
 		action = func() {printInternalActionCodeError(action_code)}

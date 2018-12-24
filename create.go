@@ -8,9 +8,6 @@ import (
 )
 
 
-
-
-
 // makeCreateAction returns the Create action function. It requires
 // the user's config and the terms given on the command line.
 func makeCreateAction(conf Config, terms []string) func() {
@@ -26,8 +23,6 @@ func makeCreateAction(conf Config, terms []string) func() {
 	return action
 }
 
-
-
 // makeRecordFromInput transforms the given terms, adds initial meta-
 // data, and returns a fully-formed Record.
 func makeRecordFromInput(terms []string) Record {
@@ -39,8 +34,6 @@ func makeRecordFromInput(terms []string) Record {
 
 	return Record{val, tags, times, 0.0}
 }
-
-
 
 // appendRecordsToFile appends the given records, one by one, to the
 // file named by the given string.
@@ -54,8 +47,8 @@ func appendRecordsToFile(file_name string, records []Record) {
 	}
 }
 
-
-
+// printTermCreationError prints usage information on how to create
+// a new entry.
 func printTermCreationError() {
 	fmt.Println("A new entry needs a value and any number of tags. Example:\n  $ star -n value tag1 tag2 tag3")
 }

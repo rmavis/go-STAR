@@ -12,7 +12,7 @@ import (
 // the given terms, print the matches, prompt for the wanted records,
 // then act on those wanted records. The final action taken on the
 // wanted records is determined by the given action code.
-func makeSearchAction(conf Config, action_code []int, terms []string) func() {
+func makeSearchAction(conf Config, action_code ActionCode, terms []string) func() {
 	act := mergeConfigActions(&conf, action_code)
 	// fmt.Printf("Final Action code: %v\n", action)
 
@@ -36,28 +36,28 @@ func makeSearchAction(conf Config, action_code []int, terms []string) func() {
 // records as specified in the multi-part search action function. The
 // user's config and the action code are required to create the
 // context/scope for the final action.
-func getMatchAction(conf *Config, action_code []int) func([]Record) {
+func getMatchAction(conf *Config, action ActionCode) func([]Record) {
 	var act func([]Record)
 
 	var printer func([]Record)
-	if (action_code[4] == 1) {
+	if (action.Print == PrintCompact) {
 		printer = dumpRecordValuesToStdout
 	} else {
 		printer = listRecordsToStdout
 	}
 
 	switch {
-	case action_code[1] == 1:  // View, no select.
+	case action.Sub == SubActView:  // View, no select.
 		act = makeRecordPrintCaller(printer)
-	case action_code[1] == 2:  // Select and pipe.
+	case action.Sub == SubActPipe:  // Select and pipe.
 		piper := makeRecordPiper(conf.Action, pipeRecordsAsStdin)
 		act = makeRecordSelector("pipe", printer, makeActAndUpdater(conf, piper))
-	case action_code[1] == 3:  // edit
+	case action.Sub == SubActEdit:  // edit
 		act = makeRecordSelector("edit", printer, makeEditor(conf))
-	case action_code[1] == 4:  // delete
+	case action.Sub == SubActDelete:  // delete
 		act = makeRecordSelector("delete", printer, makeDeleter(conf))
 	default:  // Bork.
-		fmt.Fprintf(os.Stderr, "Unrecognized action `%v`", action_code[1])
+		fmt.Fprintf(os.Stderr, "Unrecognized action `%v`", action.Sub)
 		act = makeRecordPrintCaller(printer)
 	}
 
@@ -69,18 +69,18 @@ func getMatchAction(conf *Config, action_code []int) func([]Record) {
 // matches that must occur between the given terms and the scanned
 // Records for a Record to "match" the terms. This value can depend
 // on the action code or the number of terms.
-func getMatchLim(action_code []int, num_terms int) int {
+func getMatchLim(action_code ActionCode, num_terms int) int {
 	var lim int
 
 	switch {
 	case num_terms == 0:
 		lim = 0
-	case action_code[2] == 1:  // loose
+	case action_code.Match == MatchLoose:  // loose
 		lim = 1
-	case action_code[2] == 2:  // strict
+	case action_code.Match == MatchStrict:  // strict
 		lim = num_terms
 	default:  // Bork.
-		fmt.Fprintf(os.Stderr, "Invalid match code (%v). Using '1'.\n", action_code[2])
+		fmt.Fprintf(os.Stderr, "Invalid match code (%v). Using '1'.\n", action_code.Match)
 		lim = 1
 	}
 

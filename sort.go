@@ -42,27 +42,27 @@ func (a ByDateCreated) Less(i, j int) bool {
 // makeSorter returns the sorting function used in the multi-part
 // Search action function. If search terms are given, then the sort
 // sort will be by relevancy. Else, by date.
-func makeSorter(action_code []int, has_terms bool) func([]Record) {
+func makeSorter(action_code ActionCode, has_terms bool) func([]Record) {
 	var sorter func([]Record)
 
 	if (has_terms) {
-		if (action_code[3] == 2) {  // ascending
-			sorter = func(records []Record) {
-				sort.Sort(ByDateCreated(records))
-			}
-		} else {  // descending
-			sorter = func(records []Record) {
-				sort.Sort(sort.Reverse(ByDateCreated(records)))
-			}
-		}
-	} else {
-		if (action_code[3] == 2) {  // ascending
+		if (action_code.Sort == SortAsc) {  // ascending
 			sorter = func(records []Record) {
 				sort.Sort(ByMatchRate(records))
 			}
 		} else {  // descending
 			sorter = func(records []Record) {
 				sort.Sort(sort.Reverse(ByMatchRate(records)))
+			}
+		}
+	} else {
+		if (action_code.Sort == SortAsc) {  // ascending
+			sorter = func(records []Record) {
+				sort.Sort(ByDateCreated(records))
+			}
+		} else {  // descending
+			sorter = func(records []Record) {
+				sort.Sort(sort.Reverse(ByDateCreated(records)))
 			}
 		}
 	}
