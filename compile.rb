@@ -5,7 +5,7 @@
 # http://www.darrencoxall.com/golang/cross-compiling-go-is-easy/
 #
 
-appname = (ARGV.length > 0) ? ARGV[0] : Dir.getwd.split('/').last
+appname = 'star'  # (ARGV.length > 0) ? ARGV[0] : Dir.getwd.split('/').last
 
 oses = ['linux', 'darwin', 'windows']
 arches = ['amd64', '386']
