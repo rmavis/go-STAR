@@ -51,25 +51,23 @@ func defaultStoreFilePath() string {
 // readConfig checks for the user's config file. If it exists, then
 // it will be read and transformed into a Config. If it doesn't, then
 // the default Config will be returned instead.
-func readConfig() Config {
-	var conf Config
+func readConfig() *Config {
 	conf_path := configFilePath()
-
 	if doesFileExist(conf_path) {
+		var conf Config
 		cont, err := ioutil.ReadFile(conf_path)
 		checkForError(err)
 		yaml.Unmarshal(cont, &conf)
 		mergeConfigWithDefaults(&conf)
+		return &conf
 	} else {
-		conf = defaultConfig()
+		return defaultConfig()
 	}
-
-	return conf
 }
 
 // defaultConfig returns a Config filled with defaults.
-func defaultConfig() Config {
-	return Config{"", getEnv("EDITOR", DefaultEditorPath), DefaultFilterMode, DefaultPrintLines, DefaultSortOrder, defaultStoreFilePath()}
+func defaultConfig() *Config {
+	return &Config{"", getEnv("EDITOR", DefaultEditorPath), DefaultFilterMode, DefaultPrintLines, DefaultSortOrder, defaultStoreFilePath()}
 }
 
 // mergeConfigWithDefaults checks each part of the given Config and
@@ -165,48 +163,6 @@ func userHome() string {
 	checkForError(err)
 
 	return usr.HomeDir
-}
-
-// mergeConfigActions receives a Config and an ActionCode and
-// returns an ActionCode. The returned ActionCode will be a copy
-// of the given code but with the intent of the Config merged in.
-// Merging can only occur where the given code has 0s.
-func mergeConfigActions(conf *Config, code ActionCode) ActionCode {
-	act := code
-
-	if act.Sub == SubActConfig {
-		if len(conf.Action) > 0 {
-			act.Sub = SubActPipe
-		} else {
-			act.Sub = SubActView
-		}
-	}
-
-	if act.Match == MatchConfig {
-		if conf.FilterMode == "strict" {
-			act.Match = MatchStrict
-		} else {
-			act.Match = MatchLoose
-		}
-	}
-
-	if act.Sort == SortConfig {
-		if conf.SortOrder == "asc" {
-			act.Sort = SortAsc
-		} else {
-			act.Sort = SortDesc
-		}
-	}
-
-	if act.Print == PrintConfig {
-		if conf.PrintLines == "2" {
-			act.Print = PrintFull
-		} else {
-			act.Print = PrintCompact
-		}
-	}
-
-	return act
 }
 
 // getEnv checks if the given environment variable is set. If so, its

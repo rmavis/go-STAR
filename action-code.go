@@ -9,7 +9,7 @@ type ActionCode struct {
 }
 
 const (
-	MainActView int = iota + 1
+	MainActView int = iota
 	MainActCreate
 	MainActHelp
 	MainActInit
@@ -41,3 +41,40 @@ const (
 	PrintFull
 	PrintCompact
 )
+
+
+// mergeConfigActions receives pointers to a Config and an ActionCode
+// and sets values in the ActionCode according to values in the Config.
+func mergeConfigActions(conf *Config, act *ActionCode) {
+	if act.Sub == SubActConfig {
+		if len(conf.Action) > 0 {
+			act.Sub = SubActPipe
+		} else {
+			act.Sub = SubActView
+		}
+	}
+
+	if act.Match == MatchConfig {
+		if conf.FilterMode == "strict" {
+			act.Match = MatchStrict
+		} else {
+			act.Match = MatchLoose
+		}
+	}
+
+	if act.Sort == SortConfig {
+		if conf.SortOrder == "asc" {
+			act.Sort = SortAsc
+		} else {
+			act.Sort = SortDesc
+		}
+	}
+
+	if act.Print == PrintConfig {
+		if conf.PrintLines == "2" {
+			act.Print = PrintFull
+		} else {
+			act.Print = PrintCompact
+		}
+	}
+}

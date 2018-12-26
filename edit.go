@@ -12,7 +12,6 @@ import (
 )
 
 
-
 // The value of EditFileInstructions will be written to the top of
 // the temporary file used for editing entries.
 const EditFileInstructions = `# STAR will read this file and update its store with the new values.
@@ -35,9 +34,6 @@ const EditFileInstructions = `# STAR will read this file and update its store wi
 # Lines that start with a pound sign will be ignored.
 
 `
-
-
-
 
 
 // makeEditor returns the Edit search action function: the returned
@@ -84,8 +80,6 @@ func makeEditor(conf *Config) func([]Record) {
 	return ed
 }
 
-
-
 // makeEditUpdater does the same thing as `makeBackupUpdater` except
 // it operates on pairs of Records instead of individuals. For each
 // pair, the first is the old entry, used for comparison, and the
@@ -130,8 +124,6 @@ func makeEditUpdater(rec_pairs [][]Record) func(*os.File) func(Record) {
 
 	return bk
 }
-
-
 
 // parseRecordsFromTempFile reads the file named by the given string
 // and translates that data into a map of Records, which it returns.
@@ -192,8 +184,6 @@ func parseRecordsFromTempFile(tmp_name string) map[int]Record {
 	return records
 }
 
-
-
 // collateRecordsByIndex pairs the Records parsed from the edit file
 // with the slice of wanted Records. If Records are present that do
 // not correspond to the slice of wanted Records, then those are new
@@ -223,8 +213,6 @@ func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Reco
 
 	return collated, additions
 }
-
-
 
 // cleanInputTags transforms the string of tags from the edit file
 // into a slice of strings that can be used in the Record structure.

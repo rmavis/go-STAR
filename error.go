@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 
@@ -23,6 +24,6 @@ func checkForError(e error) {
 
 // printInternalActionCodeError receives an ActionCode and prints
 // an error message.
-func printInternalActionCodeError(action_code ActionCode) {
-	fmt.Printf("There's a problem with the action code (%v).\n", action_code)
+func printInternalActionCodeError(act *ActionCode) {
+	fmt.Fprintf(os.Stderr, "There's a problem with the action code (%v).\n", act)
 }

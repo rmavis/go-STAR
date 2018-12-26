@@ -12,11 +12,11 @@ import (
 // the given terms, print the matches, prompt for the wanted records,
 // then act on those wanted records. The final action taken on the
 // wanted records is determined by the given action code.
-func makeSearchAction(conf Config, action_code ActionCode, terms []string) func() {
-	act := mergeConfigActions(&conf, action_code)
+func makeSearchAction(conf *Config, act *ActionCode, terms []string) func() {
+	mergeConfigActions(conf, act)
 	// fmt.Printf("Final Action code: %v\n", action)
 
-	match_act := getMatchAction(&conf, act)
+	match_act := getMatchAction(conf, act)
 	match_lim := getMatchLim(act, len(terms))
 	matcher := makeMatcher(terms, match_lim)
 	sorter := makeSorter(act, (len(terms) > 0))
@@ -30,63 +30,60 @@ func makeSearchAction(conf Config, action_code ActionCode, terms []string) func(
 	return action
 }
 
-
 // getMatchAction returns a function that acts on a slice of Records.
 // This function will be the the final action taken on the wanted
 // records as specified in the multi-part search action function. The
 // user's config and the action code are required to create the
 // context/scope for the final action.
-func getMatchAction(conf *Config, action ActionCode) func([]Record) {
-	var act func([]Record)
+func getMatchAction(conf *Config, act *ActionCode) func([]Record) {
+	var action func([]Record)
 
 	var printer func([]Record)
-	if (action.Print == PrintCompact) {
+	if (act.Print == PrintCompact) {
 		printer = dumpRecordValuesToStdout
 	} else {
 		printer = listRecordsToStdout
 	}
 
 	switch {
-	case action.Sub == SubActView:  // View, no select.
-		act = makeRecordPrintCaller(printer)
-	case action.Sub == SubActPipe:  // Select and pipe.
+	case act.Sub == SubActView:  // View, no select.
+		action = makeRecordPrintCaller(printer)
+	case act.Sub == SubActPipe:  // Select and pipe.
 		piper := makeRecordPiper(conf.Action, pipeRecordsAsStdin)
-		act = makeRecordSelector("pipe", printer, makeActAndUpdater(conf, piper))
-	case action.Sub == SubActEdit:  // edit
-		act = makeRecordSelector("edit", printer, makeEditor(conf))
-	case action.Sub == SubActDelete:  // delete
-		act = makeRecordSelector("delete", printer, makeDeleter(conf))
+		action = makeRecordSelector("pipe", printer, makeActAndUpdater(conf, piper))
+	case act.Sub == SubActEdit:  // edit
+		action = makeRecordSelector("edit", printer, makeEditor(conf))
+	case act.Sub == SubActDelete:  // delete
+		action = makeRecordSelector("delete", printer, makeDeleter(conf))
 	default:  // Bork.
-		fmt.Fprintf(os.Stderr, "Unrecognized action `%v`", action.Sub)
-		act = makeRecordPrintCaller(printer)
+		fmt.Fprintf(os.Stderr, "Unrecognized action `%v`", act.Sub)
+		action = makeRecordPrintCaller(printer)
 	}
 
-	return act
+	return action
 }
-
 
 // getMatchLim returns an integer that specifies the number of
 // matches that must occur between the given terms and the scanned
 // Records for a Record to "match" the terms. This value can depend
 // on the action code or the number of terms.
-func getMatchLim(action_code ActionCode, num_terms int) int {
+func getMatchLim(act *ActionCode, num_terms int) int {
 	var lim int
 
 	switch {
 	case num_terms == 0:
 		lim = 0
-	case action_code.Match == MatchLoose:  // loose
+	case act.Match == MatchLoose:  // loose
 		lim = 1
-	case action_code.Match == MatchStrict:  // strict
+	case act.Match == MatchStrict:  // strict
 		lim = num_terms
 	default:  // Bork.
-		fmt.Fprintf(os.Stderr, "Invalid match code (%v). Using '1'.\n", action_code.Match)
+		fmt.Fprintf(os.Stderr, "Invalid match code (%v). Using '1'.\n", act.Match)
 		lim = 1
 	}
 
 	return lim
 }
-
 
 // makeMatcher returns a function that can be called in the record-
 // reading process to determine if the read record "matches".

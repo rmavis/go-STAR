@@ -5,9 +5,6 @@ import (
 )
 
 
-
-
-
 // makeDeleter makes the Delete search action function: the returned
 // function will receive the slice of wanted Records and ensure they
 // are not included in the updated store file.
@@ -22,8 +19,6 @@ func makeDeleter(conf *Config) func([]Record) {
 
 	return deleter
 }
-
-
 
 // removeRecord returns a copy of the given slice of Records but
 // without the element on the given index.

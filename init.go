@@ -1,9 +1,6 @@
 package main
 
 
-
-
-
 // makeInitializer returns a main action function that will
 // initialize the user's config and store files. If the user
 // specifies a file path on the command line as the first argument,
@@ -13,8 +10,8 @@ func makeInitializer(terms []string) func() {
 		checkConfigFile()
 		conf := readConfig()
 		conf.Store = checkStoreFile(terms[0], defaultStoreFilePath())
-		mergeConfigWithDefaults(&conf)
-		saveConfigToFile(&conf)
+		mergeConfigWithDefaults(conf)
+		saveConfigToFile(conf)
 	}
 
 	return init

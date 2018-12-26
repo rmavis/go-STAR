@@ -9,10 +9,9 @@ import (
 
 // parseArgs takes a slice of strings, being the command line args,
 // and returns an ActionCode and a slice of strings that, if present,
-// will affect the action -- as search terms, or new inputs, or
-// whatever.
+// will affect the action (as search terms, new inputs, etc).
 func parseArgs(args []string) (*ActionCode, []string) {
-	act := ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
+	act := &ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
 	var strs []string
 
 out:
@@ -23,12 +22,12 @@ out:
 
 			if arg[1] == '-' {  // Long-form options start with two.
 				arg = strings.Replace(arg, string('-'), "", -1)
-				act = mergeActionCodes(act, getActFromWord(arg))
+				updateActionCodeFromWord(arg, act)
 			} else {  // Short-form options start with one.
 				arg = strings.Replace(arg, string('-'), "", -1)
 				for i := 0; i < len(arg); i++ {
 					char := string(arg[i])
-					act = mergeActionCodes(act, getActFromChar(char))
+					updateActionCodeFromChar(char, act)
 				}
 			}
 		} else {
@@ -42,119 +41,93 @@ out:
 	return act, strs
 }
 
-// getActFromChar receives a string, being a short-form command-line
-// option, and returns a slice of ints that encodes the corresponding
-// action. 0s in the action code indicate that an int from a prior
-// action code can be merged in at that location.
-func getActFromChar(arg string) []int {
-	var act []int
-
+// updateActionCodeFromChar receives a string, being a short-form
+// command-line option, and a pointer to an ActionCode, and it sets
+// some value in that ActionCode according to the string.
+func updateActionCodeFromChar(arg string, act *ActionCode) {
 	switch {
 	case arg == "1":  // print compressed otuput
-		act = []int{0, 0, 0, 0, PrintCompact}
+		act.Print = PrintCompact
 	case arg == "2":  // print full otuput
-		act = []int{0, 0, 0, 0, PrintFull}
+		act.Print = PrintFull
 	case arg == "a":  // ascending order
-		act = []int{0, 0, 0, SortAsc, 0}
+		act.Sort = SortAsc
 	case arg == "b":  // browse (print only, no select)
-		act = []int{MainActView, SubActView, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActView
 	case arg == "d":  // descending order
-		act = []int{0, 0, 0, SortDesc, 0}
+		act.Sort = SortDesc
 	case arg == "e":  // select, edit
-		act = []int{MainActView, SubActEdit, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActEdit
 	case arg == "h":  // help
-		act = []int{MainActHelp, 0, 0, 0, 0}
+		act.Main = MainActHelp
 	case arg == "i":  // init
-		act = []int{MainActInit, 0, 0, 0, 0}
+		act.Main = MainActInit
 	case arg == "l":  // match loose
-		act = []int{0, 0, MatchLoose, 0, 0}
+		act.Match = MatchLoose
 	case arg == "m":  // Demo.  #TODO
-		act = []int{MainActDemo, 0, 0, 0, 0}
+		act.Main = MainActDemo
 	case arg == "n":  // create entry
-		act = []int{MainActCreate, 0, 0, 0, 0}
+		act.Main = MainActCreate
 	case arg == "p":  // select, pipe
-		act = []int{MainActView, SubActPipe, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActPipe
 	case arg == "s":  // match strict
-		act = []int{0, 0, MatchStrict, 0, 0}
+		act.Match = MatchStrict
 	// case arg == "t":  // view tags
 	// 	act = []int{4, 2, 0, 0, 0}
 	// case arg == "v":  // view values
 	// 	act = []int{4, 1, 0, 0, 0}
 	case arg == "x":  // select, delete
-		act = []int{MainActView, SubActDelete, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActDelete
 	default:
-		fmt.Fprintf(os.Stderr, "Unrecognized option `%v`", arg)
-		act = []int{0, 0, 0, 0, 0}
+		fmt.Fprintf(os.Stderr, "Unrecognized short-form option `%v`", arg)
 	}
-
-	return act
 }
 
-// getActFromWord receives a string, being a long-form command-line
-// option, and returns a slice of ints that encodes the corresponding
-// action. 0s in the action code indicate that an int from a prior
-// action code can be merged in at that location.
-func getActFromWord(arg string) []int {
-	var act []int
-
+// updateActionCodeFromWord is just like `updateActionCodeFromChar`
+// except it acts on long-form options.
+func updateActionCodeFromWord(arg string, act *ActionCode) {
 	switch {
 	case arg == "asc":
-		act = []int{0, 0, 0, SortAsc, 0}
+		act.Sort = SortAsc
 	case arg == "browse":
-		act = []int{MainActView, SubActView, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActView
 	case arg == "desc":
-		act = []int{0, 0, 0, SortDesc, 0}
+		act.Sort = SortDesc
 	case arg == "delete":
-		act = []int{MainActView, SubActDelete, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActDelete
 	case arg == "demo":  // Demo.  #TODO
-		act = []int{MainActDemo, 0, 0, 0, 0}
+		act.Main = MainActDemo
 	case arg == "edit":
-		act = []int{MainActView, SubActEdit, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActEdit
 	case arg == "help":
-		act = []int{MainActHelp, 0, 0, 0, 0}
+		act.Main = MainActHelp
 	case arg == "init":
-		act = []int{MainActInit, 0, 0, 0, 0}
+		act.Main = MainActInit
 	case arg == "loose":
-		act = []int{0, 0, MatchLoose, 0, 0}
+		act.Match = MatchLoose
 	case arg == "new":
-		act = []int{MainActCreate, 0, 0, 0, 0}
+		act.Main = MainActCreate
 	case arg == "one-line":
-		act = []int{0, 0, 0, 0, PrintCompact}
+		act.Print = PrintCompact
 	case arg == "pipe":
-		act = []int{MainActView, SubActPipe, 0, 0, 0}
+		act.Main = MainActView
+		act.Sub = SubActPipe
 	case arg == "strict":
-		act = []int{0, 0, MatchStrict, 0, 0}
+		act.Match = MatchStrict
 	// case arg == "tags":
 	// 	act = []int{4, 2, 0, 0, 0}
 	case arg == "two-line":
-		act = []int{0, 0, 0, 0, PrintFull}
+		act.Print = PrintFull
 	// case arg == "vals":
 	// 	act = []int{4, 1, 0, 0, 0}
 	default:
-		fmt.Fprintf(os.Stderr, "Unrecognized option `%v`", arg)
-		act = []int{0, 0, 0, 0, 0}
+		fmt.Fprintf(os.Stderr, "Unrecognized long-form option `%v`", arg)
 	}
-
-	return act
-}
-
-// mergeActionCodes receives an action code and a list of action
-// codes and returns an action code. For each 0 in the single action
-// code, a non-zero in that place will be looked for in each code in
-// the list, and the first non-zero will be substituted in its place.
-// A non-zero int in an action code indicates a stated intent.
-// The list should be considered a pool that can be merged into the
-// single. It should be ordered oldest to most recent.
-func mergeActionCodes(act_a []int, act_b []int) []int {
-	//fmt.Fprintf(os.Stderr, "MERGING ACTION CODES: `%v` into `%v`", act_b, act_a)
-	new := act_a
-
-	for o := 0; o < len(act_b); o++ {
-		if act_b[o] > 0 {
-			new[o] = act_b[o]
-		}
-	}
-
-	//fmt.Fprintf(os.Stderr, "MERGED ACTION CODES: `%v`", new)
-	return new
 }

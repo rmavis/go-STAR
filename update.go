@@ -9,9 +9,6 @@ import (
 )
 
 
-
-
-
 // makeActAndUpdater returns a procedure for use in the Search action
 // function in which the wanted Records will be updated and those
 // updates will be written to the store file.
@@ -24,8 +21,6 @@ func makeActAndUpdater(conf *Config, act func([]Record)) func([]Record) {
 
 	return updater
 }
-
-
 
 // updateWantedRecords updates the metadata for each Record in the
 // given slice.
@@ -45,8 +40,6 @@ func updateWantedRecords(records []Record) {
 		// if utf8.RuneCountInString(record.Meta)
 	}
 }
-
-
 
 // makeBackupUpdater returns a function that returns a function that
 // can be used in the backup procedure.

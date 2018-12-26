@@ -10,7 +10,7 @@ import (
 
 // makeCreateAction returns the Create action function. It requires
 // the user's config and the terms given on the command line.
-func makeCreateAction(conf Config, terms []string) func() {
+func makeCreateAction(conf *Config, terms []string) func() {
 	action := func() {
 		if len(terms) == 0 {
 			printTermCreationError()
@@ -50,5 +50,5 @@ func appendRecordsToFile(file_name string, records []Record) {
 // printTermCreationError prints usage information on how to create
 // a new entry.
 func printTermCreationError() {
-	fmt.Println("A new entry needs a value and any number of tags. Example:\n  $ star -n value tag1 tag2 tag3")
+	fmt.Fprintf(os.Stderr, "A new entry needs a value and any number of tags. Example:\n  $ star -n value tag1 tag2 tag3")
 }
