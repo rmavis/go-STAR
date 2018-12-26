@@ -8,24 +8,19 @@ import (
 
 // main runs the show.
 func main() {
-	// This gets the ActionCode and terms from the command line
-	// arguments, if any exist.
-	act, terms := parseArgs(os.Args[1:])
-
-	// `action` will be a function that, like `main`, will be called
-	// with no arguments and that will return nothing.
 	var action func()
 
+	act, terms := parseArgs(os.Args[1:])
 	switch {
-	case act.Main == MainActView:  // view
+	case act.Main == MainActView:
 		action = makeSearchAction(readConfig(), act, terms)
-	case act.Main == MainActCreate:  // create
+	case act.Main == MainActCreate:
 		action = makeCreateAction(readConfig(), terms)
-	case act.Main == MainActHelp:  // help
+	case act.Main == MainActHelp:
 		action = func() {printUsageInformation()}
-	case act.Main == MainActInit:  // initialize
+	case act.Main == MainActInit:
 		action = makeInitializer(terms)
-	case act.Main == MainActDemo:  // demo
+	case act.Main == MainActDemo:
 		action = func() {fmt.Printf("Would make `demo` action.")}  // #TODO
 	default:
 		action = func() {printInternalActionCodeError(act)}

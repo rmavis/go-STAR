@@ -7,9 +7,10 @@ import (
 )
 
 
-// parseArgs takes a slice of strings, being the command line args,
-// and returns an ActionCode and a slice of strings that, if present,
-// will affect the action (as search terms, new inputs, etc).
+// parseArgs receives the command line arguments and returns two
+// useful interpretations of those arguments: an ActionCode and a
+// slice of strings that, if present, will affect the action (as
+// search terms, new inputs, etc).
 func parseArgs(args []string) (*ActionCode, []string) {
 	act := &ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
 	var strs []string
@@ -31,9 +32,9 @@ out:
 				}
 			}
 		} else {
-			strs = args[o:]
 			// The first non-option argument signals that the rest of
 			// the arguments are for input for the action.
+			strs = args[o:]
 			break out;
 		}
 	}

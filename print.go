@@ -24,7 +24,6 @@ func makeRecordPrintCaller(printer func([]Record)) func([]Record) {
 	return caller
 }
 
-
 // printRecords prints the given slice of Records to the given
 // io.Writer in the given format.
 func printRecords(out io.Writer, records []Record, format string) {
@@ -48,20 +47,17 @@ func printRecords(out io.Writer, records []Record, format string) {
 	}
 }
 
-
 // listRecordsToStdout is a convenience function for printing the
 // given records to stdout.
 func listRecordsToStdout(records []Record) {
 	printRecords(os.Stdout, records, "%v%v) %v\n%v%v\n")
 }
 
-
 // listRecordsToTempFile is a convenience function for printing the
 // given records to the given file handle.
 func listRecordsToTempFile(records []Record, file *os.File) {
 	printRecords(file, records, "%v%v) %v\n%vTags: %v\n\n")
 }
-
 
 // dumpRecordValuesToStdout receives a slice of Records and writes
 // the value of each to stdout.

@@ -1,5 +1,8 @@
 package main
 
+
+// ActionCode is a structure that contains fields for encoding the
+// user's desired action as parsed from the command line.
 type ActionCode struct {
 	Main int
 	Sub int
@@ -7,6 +10,9 @@ type ActionCode struct {
 	Sort int
 	Print int
 }
+
+// These constants are like enums. They clarify the purpose of an
+// ActionCode's fields.
 
 const (
 	MainActView int = iota

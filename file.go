@@ -11,13 +11,9 @@ import (
 )
 
 
-
-
-
 //
 // Functions for reading and acting on records in the store file.
 //
-
 
 // readRecordsFromFile reads the file named by the given string,
 // parses each well-formed entry into a Record, and passes the Record
@@ -32,7 +28,6 @@ func readRecordsFromFile(file_name string, getMatchInfo func(Record) (float64, b
 		if matches {
 			record.MatchRate = match_rate
 			records = append(records, record)
-			// fmt.Printf("Record matches: %v / %v / %v / %v\n", record.Value, record.Tags, record.Meta, record.MatchRate)
 		}
 	}
 
@@ -40,8 +35,6 @@ func readRecordsFromFile(file_name string, getMatchInfo func(Record) (float64, b
 
 	return records
 }
-
-
 
 // forEachRecordInFile reads the file named by the given string and,
 // for each well-formed entry, it transforms the entry to a Record
@@ -68,8 +61,6 @@ func forEachRecordInFile(file_name string, actOnRecord func(Record)) {
 		}
 	}
 }
-
-
 
 // updateStoreFile will "update" the file named by the given string
 // by first making a backup and then renaming the backup over the
@@ -102,29 +93,21 @@ func updateStoreFile(file_name string, bkMaker func(*os.File) func(Record)) {
 }
 
 
-
-
-
 //
 // Utility functions.
 //
-
 
 // readNextEntry reads the given IO buffer up to the next separator.
 // It returns the string read, removing whitespace and the separator.
 func readNextEntry(reader *bufio.Reader, separator byte) (string, bool) {
 	record, err := reader.ReadBytes(separator)
 	last := false
-
 	if err != nil {
 		last = true
 		// fmt.Printf("Error! %v (%v)\n", err, string(record))
 	}
-
 	return strings.TrimSpace(string(record)), last;
 }
-
-
 
 // saveRecordToFile writed the given Record to the given file.
 func saveRecordToFile(file *os.File, record Record) {
@@ -132,30 +115,21 @@ func saveRecordToFile(file *os.File, record Record) {
 	checkForError(err)
 }
 
-
-
 // getTempFileName returns a temp file whose name includes the given
 // string.
 func getTempFileName(fx string) string {
 	usr, err := user.Current()
 	checkForError(err)
-
 	return os.TempDir() + "/" + usr.Name + "_star_" + fx + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".tmp"
 }
-
-
 
 // createFile creates a file named by the given string.
 func createFile(path string) *os.File {
 	file, err := os.Create(path)
 	checkForError(err)
-
 	file.Chmod(0644)
-
 	return file
 }
-
-
 
 // doesFileExist checks if a file named by the given string exists.
 func doesFileExist(file string) bool {

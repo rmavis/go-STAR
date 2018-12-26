@@ -49,7 +49,7 @@ func pipeRecordsAsStdin(records []Record, tool string) {
 func pipeToToolAsArg(str string, tool string) {
 	cmd := exec.Command(tool, str)
 	printErr := func(err error) {
-		fmt.Printf("Error running `%v %v`: %v\n", tool, str, err)
+		fmt.Fprintf(os.Stderr, "Error running `%v %v`: %v\n", tool, str, err)
 	}
 	runCommand(cmd, printErr)
 }

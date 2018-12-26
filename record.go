@@ -5,7 +5,6 @@ import (
 )
 
 
-
 // Record is a structure that contains each part of an entry.
 // An entry is built from a Record.
 // A Record is built from a well-formed entry.
@@ -18,15 +17,11 @@ type Record struct {
 }
 
 
-
 // These are the ASCII Group, Record, and Unit separator characters.
 // They are of type `rune`.
 const GroupSeparator = ''   // Separates records
 const RecordSeparator = ''  // Separates parts of records (the value from the tags)
 const UnitSeparator = ''    // Separates parts of parts (each tag from each tag)
-
-
-
 
 
 // joinRecord receives a Record and returns a string. The Record's
@@ -48,8 +43,6 @@ func joinRecord(record Record) string {
 	return strings.Join(parts, "")
 }
 
-
-
 // splitEntry receives a string and returns a slice of strings. The
 // `entry` should still contain the trailing group separator (which
 // splits entries). The string will be split on the record separator.
@@ -59,8 +52,6 @@ func splitEntry(entry string) []string {
 	return fields
 }
 
-
-
 // splitField receives a string and returns a slice of strings. It
 // splits on the unit separator. This is useful for creating, e.g.,
 // a slice of tags.
@@ -69,16 +60,12 @@ func splitField(field string) []string {
 	return parts
 }
 
-
-
 // makeRecordFromParts receives a slice of strings and returns a
 // Record. The slice should be a well-formed entry: a string, and two
 // a lists of strings joined by the unit separator.
 func makeRecordFromParts(entry []string) Record {
 	return Record{entry[0], splitField(entry[1]), splitField(entry[2]), 0.0}
 }
-
-
 
 // doesEntryHaveParts receives a slice of strings and returns a bool
 // indicating whether the slice contains three parts. A well-formed

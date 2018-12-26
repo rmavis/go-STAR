@@ -5,9 +5,6 @@ import (
 )
 
 
-
-
-
 func printUsageInformation() {
 	msg := `USAGE
 

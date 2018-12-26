@@ -40,8 +40,6 @@ func makeRecordSelector(prompt_verb string, print func([]Record), act func([]Rec
 	return selector
 }
 
-
-
 // promptForWantedRecord prints a prompt containing the given verb to
 // stdout. It will collect the user's input, remove whitespace, and
 // return it.
@@ -53,8 +51,6 @@ func promptForWantedRecord(verb string) string {
 
 	return strings.TrimSpace(input)
 }
-
-
 
 // getWantedRecords receives a slice of Records and a string. It will
 // check that string and return either a sub-slice of the Records
@@ -78,8 +74,6 @@ func getWantedRecords(records []Record, input string) []Record {
 		return wanted
 	}
 }
-
-
 
 // getIntsFromInput receives a string and returns a slice of the
 // unique ints that string contains. Ints in the string can be
@@ -107,23 +101,17 @@ func getIntsFromInput(input string) []int {
 	return clean
 }
 
-
-
 // willDoNothing prints a message containing the given verb to stdout
 // indicating to the user that no action will be taken.
 func willDoNothing(verb string) {
 	fmt.Printf("Will %v nothing.\n", verb)
 }
 
-
-
 // noRecordsMatch prints a message useful for indicating to the
 // user that no records match the search terms that were given.
 func noRecordsMatch() {
 	fmt.Printf("No records match.\n")
 }
-
-
 
 // willActOnRecord prints a message stating that the given verb will
 // happen to the given value.
