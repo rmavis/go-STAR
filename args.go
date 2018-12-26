@@ -8,17 +8,11 @@ import (
 
 
 // parseArgs takes a slice of strings, being the command line args,
-// and returns a slice of ints that, together, encode the user's
-// intent, and a slice of strings that, if present, will affect the
-// action -- as search terms, or new inputs, or whatever. The slice
-// returned should be interpreted like:
-// 0 = major action (select, create, etc)
-// 1 = sub-action (edit matches, delete matches, etc)
-// 3 = match mode (loose, strict)
-// 4 = sort order (high to low, low to high)
-// 5 = output format (compressed, full)
-func parseArgs(args []string) (ActionCode, []string) {
-	act := []int{1, 0, 0, 0, 0}
+// and returns an ActionCode and a slice of strings that, if present,
+// will affect the action -- as search terms, or new inputs, or
+// whatever.
+func parseArgs(args []string) (*ActionCode, []string) {
+	act := ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
 	var strs []string
 
 out:
@@ -45,7 +39,7 @@ out:
 		}
 	}
 
-	return ActionCode{act[0], act[1], act[2], act[3], act[4]}, strs
+	return act, strs
 }
 
 // getActFromChar receives a string, being a short-form command-line
