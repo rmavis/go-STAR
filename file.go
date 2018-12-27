@@ -67,17 +67,16 @@ func forEachRecordInFile(file_name string, actOnRecord func(Record)) {
 // original. The backup process is determined by the `bkMaker` param,
 // which must be a function that returns a function that can be used
 // on each record in the file.
-func updateStoreFile(file_name string, bkMaker func(*os.File) func(Record)) {
+func updateStoreFile(file_name string, bkMaker func(*os.File, Record)) {
 	bk_name := file_name + "_bk_" + strconv.FormatInt(time.Now().Unix(), 10)
 	bk_file, err := os.Create(bk_name)
 	checkForError(err)
 	defer bk_file.Close()
 
-	updater := bkMaker(bk_file)
-
+	updater := func(record Record) {
+		bkMaker(bk_file, record)
+	}
 	forEachRecordInFile(file_name, updater)
-
-	// If there are still records in `records`, will want to append those.  #TODO
 
 	// Get perms from store
 	// f_info, err := os.Stat(file_name)

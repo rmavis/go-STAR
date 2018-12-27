@@ -44,89 +44,74 @@ const EditFileInstructions = `# STAR will read this file and update its store wi
 // but not deleted.
 func makeEditor(conf *Config) func([]Record) {
 	ed := func(records []Record) {
-		// Make tmp file
+		// Create the temp file, add the instructions and records.
 		tmp_name := getTempFileName("edit")
 		tmp_file := createFile(tmp_name)
-		// defer tmp_file.Close()
-
-		// Print instructions, records to tmp file
 		tmp_file.WriteString(EditFileInstructions)
 		listRecordsToTempFile(records, tmp_file)
 		tmp_file.Close()
 
-		// Open tmp file in editor
+		// Open temp file in the user's editor, wait for editor to close.
 		ed := checkEditor(conf.Editor, getEnv("EDITOR", DefaultEditorPath))
 		pipeToToolAsArg(tmp_name, ed)
 
-		// Wait for editor to close
-
-		// Open temp file
+		// Read and parse temp file.
 		ed_recs := parseRecordsFromTempFile(tmp_name)
-		mods, adds, _ := collateRecordsByIndex(records, ed_recs)
-		// fmt.Printf("Parsed records from temp file `%v`:\nEDITS: %v\nNEWS: %v\nDELETIONS: %v\n", tmp_name, mods, adds, dels)
+		edits, adds, dels := collateRecordsByIndex(records, ed_recs)
+		// fmt.Printf("Parsed records from temp file `%v`:\nEDITS: %v\nNEWS: %v\nDELETIONS: %v\n", tmp_name, edits, adds, dels)
 
-		if len(mods) > 0 {
-			updateStoreFile(conf.Store, makeEditUpdater(mods))
-		}
-
-		// if len(dels) > 0 {
-		// 	updateStoreFile(conf.Store, makeBackupUpdater(records, dels))
-		// }
-
-		if len(adds) > 0 {
-			appendRecordsToFile(conf.Store, adds)
-		}
-
+		// Delete the temp file.
 		err := os.Remove(tmp_name)
 		checkForError(err)
+
+		saveEditsToStore(conf, adds, edits, dels)
+
+		// if len(mods) > 0 {
+		// 	updateStoreFile(conf.Store, makeEditUpdater(mods))
+		// }
+
+		// // if len(dels) > 0 {
+		// // 	updateStoreFile(conf.Store, makeBackupUpdater(records, dels))
+		// // }
+
+		// if len(adds) > 0 {
+		// 	appendRecordsToFile(conf.Store, adds)
+		// }
 	}
 
 	return ed
 }
 
-// makeEditUpdater does the same thing as `makeBackupUpdater` except
-// it operates on pairs of Records instead of individuals. For each
-// pair, the first is the old entry, used for comparison, and the
-// second is the new one, which gets saved in place of the old one.
-func makeEditUpdater(rec_pairs [][]Record) func(*os.File) func(Record) {
-	bk := func(bk_file *os.File) func(Record) {
-		_bk := func(record Record) {
-			if (len(rec_pairs) == 0) {
-				saveRecordToFile(bk_file, record)
-			} else {
-				bk_line := true
+func saveEditsToStore(conf *Config, adds []Record, edits [][]Record, dels []Record) {
+	editer := func(bk_file *os.File, record Record) {
+		should_bk := true
 
-				for n, mod := range rec_pairs {
-					if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
-						saveRecordToFile(bk_file, mod[1])
-
-						var new_mods [][]Record
-						switch {
-						case n == 0:
-							new_mods = rec_pairs[1:]
-						case n == (len(rec_pairs) - 1):
-							new_mods = rec_pairs[0:n]
-						default:
-							new_mods = rec_pairs[0:n]
-							new_mods = append(new_mods, rec_pairs[(n + 1):]...)
-						}
-						rec_pairs = new_mods
-
-						bk_line = false
-						break
-					}
-				}
-
-				if bk_line {
-					saveRecordToFile(bk_file, record)
-				}
+		for n, mod := range edits {
+			if ((mod[0].Value == record.Value) && (reflect.DeepEqual(mod[0].Tags, record.Tags))) {
+				saveRecordToFile(bk_file, mod[1])
+				edits = removeRecordPair(edits, n)
+				should_bk = false
+				break
 			}
 		}
 
-		return _bk
+		for n, del := range dels {
+			if ((del.Value == record.Value) && (reflect.DeepEqual(del.Tags, record.Tags))) {
+				dels = removeRecord(dels, n)
+				should_bk = false
+				break
+			}
+		}
+
+		if should_bk {
+			saveRecordToFile(bk_file, record)
+		}
 	}
 
-	return bk
+	updateStoreFile(conf.Store, editer)
+	if len(adds) > 0 {
+		appendRecordsToFile(conf.Store, adds)
+	}
 }
 
 // parseRecordsFromTempFile reads the file named by the given string

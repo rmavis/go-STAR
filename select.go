@@ -13,24 +13,24 @@ import (
 // function, and a record-action function and returns an action
 // function that prints records and prompts the user for the ones
 // they want to act on.
-func makeRecordSelector(prompt_verb string, print func([]Record), act func([]Record)) func([]Record) {
+func makeRecordSelector(verb string, print func([]Record), act func([]Record)) func([]Record) {
 	selector := func(records []Record) {
 		switch {
 		case len(records) == 0:
 			noRecordsMatch()
 
 		case len(records) == 1:
-			willActOnRecord(prompt_verb, records[0].Value)
+			willActOnRecord(verb, records[0].Value)
 			act(records)
 
 		default:
 			print(records)
 
-			input := promptForWantedRecord(prompt_verb)
+			input := promptForWantedRecord(verb)
 			wanted := getWantedRecords(records, input)
 
 			if len(wanted) == 0 {
-				willDoNothing(prompt_verb)
+				willDoNothing(verb)
 			} else {
 				act(wanted)
 			}
