@@ -14,7 +14,7 @@ import (
 // wanted records is determined by the given action code.
 func makeSearchAction(conf *Config, act *ActionCode, terms []string) func() {
 	mergeConfigActions(conf, act)
-	// fmt.Printf("Final Action code: %v\n", action)
+	// fmt.Printf("Final action code: %v\n", act)
 
 	match_act := getMatchAction(conf, act)
 	match_lim := getMatchLim(act, len(terms))

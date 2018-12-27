@@ -12,7 +12,7 @@ import (
 // slice of strings that, if present, will affect the action (as
 // search terms, new inputs, etc).
 func parseArgs(args []string) (*ActionCode, []string) {
-	act := &ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
+	act := defaultActionCode()
 	var strs []string
 
 out:

@@ -50,6 +50,12 @@ const (
 )
 
 
+// defaultActionCode returns a pointer to an ActionCode for the
+// default action.
+func defaultActionCode() *ActionCode {
+	return &ActionCode{MainActView, SubActConfig, MatchConfig, SortConfig, PrintConfig}
+}
+
 // mergeConfigActions receives pointers to a Config and an ActionCode
 // and sets values in the ActionCode according to values in the Config.
 func mergeConfigActions(conf *Config, act *ActionCode) {
