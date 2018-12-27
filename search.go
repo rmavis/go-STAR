@@ -38,12 +38,7 @@ func makeSearchAction(conf *Config, act *ActionCode, terms []string) func() {
 func getMatchAction(conf *Config, act *ActionCode) func([]Record) {
 	var action func([]Record)
 
-	var printer func([]Record)
-	if (act.Print == PrintCompact) {
-		printer = dumpRecordValuesToStdout
-	} else {
-		printer = listRecordsToStdout
-	}
+	printer := getPrinter(act)
 
 	switch {
 	case act.Sub == SubActView:  // View, no select.

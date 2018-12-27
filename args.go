@@ -76,10 +76,8 @@ func updateActionCodeFromChar(arg string, act *ActionCode) {
 		act.Sub = SubActPipe
 	case arg == "s":  // match strict
 		act.Match = MatchStrict
-	// case arg == "t":  // view tags
-	// 	act = []int{4, 2, 0, 0, 0}
-	// case arg == "v":  // view values
-	// 	act = []int{4, 1, 0, 0, 0}
+	case arg == "v":  // view values
+		act.Print = PrintValsOnly
 	case arg == "x":  // select, delete
 		act.Main = MainActView
 		act.Sub = SubActDelete
@@ -122,12 +120,10 @@ func updateActionCodeFromWord(arg string, act *ActionCode) {
 		act.Sub = SubActPipe
 	case arg == "strict":
 		act.Match = MatchStrict
-	// case arg == "tags":
-	// 	act = []int{4, 2, 0, 0, 0}
 	case arg == "two-line":
 		act.Print = PrintFull
-	// case arg == "vals":
-	// 	act = []int{4, 1, 0, 0, 0}
+	case arg == "vals-only":
+		act.Print = PrintValsOnly
 	default:
 		fmt.Fprintf(os.Stderr, "Unrecognized long-form option `%v`", arg)
 	}

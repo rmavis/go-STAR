@@ -46,6 +46,7 @@ const (
 	PrintConfig int = iota
 	PrintFull
 	PrintCompact
+	PrintValsOnly
 )
 
 
