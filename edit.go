@@ -62,15 +62,19 @@ func makeEditor(conf *Config) func([]Record) {
 
 		// Open temp file
 		ed_recs := parseRecordsFromTempFile(tmp_name)
-		mod_recs, new_recs := collateRecordsByIndex(records, ed_recs)
-		// fmt.Printf("Parsed records from temp file `%v`:\nEDITS: %v\nNEWS: %v\n", tmp_name, mod_recs, new_recs)
+		mods, adds, _ := collateRecordsByIndex(records, ed_recs)
+		// fmt.Printf("Parsed records from temp file `%v`:\nEDITS: %v\nNEWS: %v\nDELETIONS: %v\n", tmp_name, mods, adds, dels)
 
-		if len(mod_recs) > 0 {
-			updateStoreFile(conf.Store, makeEditUpdater(mod_recs))
+		if len(mods) > 0 {
+			updateStoreFile(conf.Store, makeEditUpdater(mods))
 		}
 
-		if len(new_recs) > 0 {
-			appendRecordsToFile(conf.Store, new_recs)
+		// if len(dels) > 0 {
+		// 	updateStoreFile(conf.Store, makeBackupUpdater(records, dels))
+		// }
+
+		if len(adds) > 0 {
+			appendRecordsToFile(conf.Store, adds)
 		}
 
 		err := os.Remove(tmp_name)
@@ -188,18 +192,19 @@ func parseRecordsFromTempFile(tmp_name string) map[int]Record {
 // with the slice of wanted Records. If Records are present that do
 // not correspond to the slice of wanted Records, then those are new
 // Records, and they'll be added to the updated store file.
-func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Record, []Record) {
+func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Record, []Record, []Record) {
+	var deletions []Record
 	var collated [][]Record
 	for index, old_rec := range ref_recs {
 		new_rec, in := new_recs[index]
-
 		if in {
 			if ((new_rec.Value != old_rec.Value) || (!reflect.DeepEqual(new_rec.Tags, old_rec.Tags))) {
 				new_rec.Meta = old_rec.Meta
 				collated = append(collated, []Record{old_rec, new_rec})
 			}
-
 			delete(new_recs, index)
+		} else {
+			deletions = append(deletions, old_rec)
 		}
 	}
 
@@ -211,7 +216,7 @@ func collateRecordsByIndex(ref_recs []Record, new_recs map[int]Record) ([][]Reco
 		}
 	}
 
-	return collated, additions
+	return collated, additions, deletions
 }
 
 // cleanInputTags transforms the string of tags from the edit file
