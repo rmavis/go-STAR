@@ -36,25 +36,23 @@ func makeSearchAction(conf *Config, act *ActionCode, terms []string) func() {
 // user's config and the action code are required to create the
 // context/scope for the final action.
 func getMatchAction(conf *Config, act *ActionCode) func([]Record) {
-	var action func([]Record)
-
 	printer := getPrinter(act)
 
+	var action func([]Record)
 	switch {
-	case act.Sub == SubActView:  // View, no select.
+	case act.Sub == SubActView:
 		action = makeRecordPrintCaller(printer)
-	case act.Sub == SubActPipe:  // Select and pipe.
+	case act.Sub == SubActPipe:
 		piper := makeRecordPiper(conf.Action, pipeRecordsAsStdin)
 		action = makeRecordSelector("pipe", printer, makeActAndUpdater(conf, piper))
-	case act.Sub == SubActEdit:  // edit
+	case act.Sub == SubActEdit:
 		action = makeRecordSelector("edit", printer, makeEditor(conf))
-	case act.Sub == SubActDelete:  // delete
+	case act.Sub == SubActDelete:
 		action = makeRecordSelector("delete", printer, makeDeleter(conf))
 	default:  // Bork.
 		fmt.Fprintf(os.Stderr, "Unrecognized action `%v`", act.Sub)
 		action = makeRecordPrintCaller(printer)
 	}
-
 	return action
 }
 

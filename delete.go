@@ -17,6 +17,8 @@ func makeDeleter(conf *Config) func([]Record) {
 	return deleter
 }
 
+// saveDeletionsToStore ensures that records marked for deletion
+// are removed from the user's store file.
 func saveDeletionsToStore(conf *Config, records []Record) {
 	deleter := func(bk_file *os.File, record Record) {
 		should_bk := true
@@ -55,6 +57,8 @@ func removeRecord(records []Record, index int) []Record {
 	return new_records
 }
 
+// removeRecordPair is just like `removeRecord` but works on slices
+// of slices of records.
 func removeRecordPair(pairs [][]Record, index int) [][]Record {
 	var new_records [][]Record
 

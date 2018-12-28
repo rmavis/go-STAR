@@ -41,6 +41,8 @@ func updateRecordsMetadata(records []Record) {
 	}
 }
 
+// saveUpdatesToStore writes the updated records to the user's store
+// file.
 func saveUpdatesToStore(conf *Config, records []Record) {
 	updater := func(bk_file *os.File, record Record) {
 		should_bk := true

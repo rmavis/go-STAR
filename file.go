@@ -65,8 +65,8 @@ func forEachRecordInFile(file_name string, actOnRecord func(Record)) {
 // updateStoreFile will "update" the file named by the given string
 // by first making a backup and then renaming the backup over the
 // original. The backup process is determined by the `bkMaker` param,
-// which must be a function that returns a function that can be used
-// on each record in the file.
+// which will receive each record in the store and determine how to
+// update it, if at all.
 func updateStoreFile(file_name string, bkMaker func(*os.File, Record)) {
 	bk_name := file_name + "_bk_" + strconv.FormatInt(time.Now().Unix(), 10)
 	bk_file, err := os.Create(bk_name)

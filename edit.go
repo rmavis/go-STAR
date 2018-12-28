@@ -64,24 +64,16 @@ func makeEditor(conf *Config) func([]Record) {
 		err := os.Remove(tmp_name)
 		checkForError(err)
 
+		// Update the store file with all those changes.
 		saveEditsToStore(conf, adds, edits, dels)
-
-		// if len(mods) > 0 {
-		// 	updateStoreFile(conf.Store, makeEditUpdater(mods))
-		// }
-
-		// // if len(dels) > 0 {
-		// // 	updateStoreFile(conf.Store, makeBackupUpdater(records, dels))
-		// // }
-
-		// if len(adds) > 0 {
-		// 	appendRecordsToFile(conf.Store, adds)
-		// }
 	}
 
 	return ed
 }
 
+// saveEditsToStore receives the user's config and three slices that
+// contain records to add, edit, and delete, and does those things
+// to the store file indicated in the config.
 func saveEditsToStore(conf *Config, adds []Record, edits [][]Record, dels []Record) {
 	editer := func(bk_file *os.File, record Record) {
 		should_bk := true
