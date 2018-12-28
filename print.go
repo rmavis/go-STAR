@@ -61,7 +61,7 @@ func printRecordsFull(out io.Writer, records []Record, format string) {
 // the value of each to stdout.
 func printRecordsCompact(records []Record) {
 	for o := 0; o < len(records); o++ {
-		fmt.Fprintf(os.Stdout, "%v\t{%v}\n", records[o].Value, strings.Join(records[o].Tags, ", "))
+		fmt.Fprintf(os.Stdout, "%v {tags: %v}\n", records[o].Value, strings.Join(records[o].Tags, ", "))
 	}
 }
 
